@@ -147,30 +147,30 @@ class Plugin(GlancesPlugin):
 
         # Build the string message
         # Header
-        msg = '{}'.format('SWAP')
+        msg = 'SWAP'
         ret.append(self.curse_add_line(msg, "TITLE"))
         msg = ' {:3}'.format(self.trend_msg(self.get_trend('percent')))
         ret.append(self.curse_add_line(msg))
         # Percent memory usage
         msg = '{:>6.1%}'.format(self.stats['percent'] / 100)
-        ret.append(self.curse_add_line(msg))
-        # New line
-        ret.append(self.curse_new_line())
+        ret.extend((self.curse_add_line(msg), self.curse_new_line()))
         # Total memory usage
         msg = '{:8}'.format('total:')
         ret.append(self.curse_add_line(msg))
         msg = '{:>6}'.format(self.auto_unit(self.stats['total']))
-        ret.append(self.curse_add_line(msg))
-        # New line
-        ret.append(self.curse_new_line())
+        ret.extend((self.curse_add_line(msg), self.curse_new_line()))
         # Used memory usage
         msg = '{:8}'.format('used:')
         ret.append(self.curse_add_line(msg))
         msg = '{:>6}'.format(self.auto_unit(self.stats['used']))
-        ret.append(self.curse_add_line(
-            msg, self.get_views(key='used', option='decoration')))
-        # New line
-        ret.append(self.curse_new_line())
+        ret.extend(
+            (
+                self.curse_add_line(
+                    msg, self.get_views(key='used', option='decoration')
+                ),
+                self.curse_new_line(),
+            )
+        )
         # Free memory usage
         msg = '{:8}'.format('free:')
         ret.append(self.curse_add_line(msg))

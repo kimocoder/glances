@@ -81,7 +81,7 @@ class Plugin(GlancesPlugin):
             try:
                 netiocounters = psutil.net_io_counters(pernic=True)
             except UnicodeDecodeError as e:
-                logger.debug('Can not get network interface counters ({})'.format(e))
+                logger.debug(f'Can not get network interface counters ({e})')
                 return self.stats
 
             # Grab interface's status (issue #765)
@@ -91,7 +91,7 @@ class Plugin(GlancesPlugin):
                 netstatus = psutil.net_if_stats()
             except OSError as e:
                 # see psutil #797/glances #1106
-                logger.debug('Can not get network interface status ({})'.format(e))
+                logger.debug(f'Can not get network interface status ({e})')
 
             # Previous network interface stats are stored in the network_old variable
             if not hasattr(self, 'network_old'):
@@ -229,8 +229,8 @@ class Plugin(GlancesPlugin):
             bps_rx = int(i['rx'] // i['time_since_update'] * 8)
             bps_tx = int(i['tx'] // i['time_since_update'] * 8)
             # Decorate the bitrate with the configuration file thresolds
-            alert_rx = self.get_alert(bps_rx, header=ifrealname + '_rx')
-            alert_tx = self.get_alert(bps_tx, header=ifrealname + '_tx')
+            alert_rx = self.get_alert(bps_rx, header=f'{ifrealname}_rx')
+            alert_tx = self.get_alert(bps_tx, header=f'{ifrealname}_tx')
             # If nothing is define in the configuration file...
             # ... then use the interface speed (not available on all systems)
             if alert_rx == 'DEFAULT' and 'speed' in i and i['speed'] != 0:
@@ -263,26 +263,22 @@ class Plugin(GlancesPlugin):
         if args.network_cumul:
             # Cumulative stats
             if args.network_sum:
-                # Sum stats
-                msg = '{:>14}'.format('Rx+Tx')
-                ret.append(self.curse_add_line(msg))
+                ret.append(self.curse_add_line('{:>14}'.format('Rx+Tx')))
             else:
                 # Rx/Tx stats
                 msg = '{:>7}'.format('Rx')
                 ret.append(self.curse_add_line(msg))
                 msg = '{:>7}'.format('Tx')
                 ret.append(self.curse_add_line(msg))
+        elif args.network_sum:
+            # Sum stats
+            msg = '{:>14}'.format('Rx+Tx/s')
+            ret.append(self.curse_add_line(msg))
         else:
-            # Bitrate stats
-            if args.network_sum:
-                # Sum stats
-                msg = '{:>14}'.format('Rx+Tx/s')
-                ret.append(self.curse_add_line(msg))
-            else:
-                msg = '{:>7}'.format('Rx/s')
-                ret.append(self.curse_add_line(msg))
-                msg = '{:>7}'.format('Tx/s')
-                ret.append(self.curse_add_line(msg))
+            msg = '{:>7}'.format('Rx/s')
+            ret.append(self.curse_add_line(msg))
+            msg = '{:>7}'.format('Tx/s')
+            ret.append(self.curse_add_line(msg))
         # Interface list (sorted by name)
         for i in self.sorted_stats():
             # Do not display interface in down state (issue #765)
@@ -296,7 +292,7 @@ class Plugin(GlancesPlugin):
                 ifname = ifrealname
             if len(ifname) > name_max_width:
                 # Cut interface name if it is too long
-                ifname = '_' + ifname[-name_max_width + 1:]
+                ifname = f'_{ifname[-name_max_width + 1:]}'
 
             if args.byte:
                 # Bytes per second (for dummy)

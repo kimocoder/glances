@@ -21,7 +21,7 @@ PY3 = sys.version_info[0] == 3
 ##################
 
 with open(os.path.join('glances', '__init__.py'), encoding='utf-8') as f:
-    version = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M).group(1)
+    version = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M)[1]
 
 if not version:
     raise RuntimeError('Cannot find Glances version information.')
@@ -31,21 +31,26 @@ with open('README.rst', encoding='utf-8') as f:
 
 
 def get_data_files():
-    data_files = [
-        ('share/doc/glances', ['AUTHORS', 'COPYING', 'NEWS', 'README.rst',
-                               'CONTRIBUTING.md', 'conf/glances.conf']),
-        ('share/man/man1', ['docs/man/glances.1'])
+    return [
+        (
+            'share/doc/glances',
+            [
+                'AUTHORS',
+                'COPYING',
+                'NEWS',
+                'README.rst',
+                'CONTRIBUTING.md',
+                'conf/glances.conf',
+            ],
+        ),
+        ('share/man/man1', ['docs/man/glances.1']),
     ]
-
-    return data_files
 
 
 def get_install_requires():
     requires = ['psutil>=5.3.0', 'future']
     if sys.platform.startswith('win'):
-        requires.append('bottle')
-        requires.append('requests')
-
+        requires.extend(('bottle', 'requests'))
     return requires
 
 
@@ -72,7 +77,7 @@ def get_install_extras_require():
         'wifi': ['wifi']
     }
     # Add automatically the 'all' target
-    extras_require.update({'all': [i[0] for i in extras_require.values()]})
+    extras_require['all'] = [i[0] for i in extras_require.values()]
 
     return extras_require
 

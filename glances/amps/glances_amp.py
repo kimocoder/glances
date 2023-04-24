@@ -48,7 +48,7 @@ class GlancesAmp(object):
 
     def __init__(self, name=None, args=None):
         """Init AMP classe."""
-        logger.debug("AMP - Init {} version {}".format(self.NAME, self.VERSION))
+        logger.debug(f"AMP - Init {self.NAME} version {self.VERSION}")
 
         # AMP name (= module name without glances_)
         if name is None:
@@ -83,10 +83,10 @@ class GlancesAmp(object):
         # option1=opt1
         # ...
         #
-        amp_section = 'amp_' + self.amp_name
+        amp_section = f'amp_{self.amp_name}'
         if (hasattr(config, 'has_section') and
                 config.has_section(amp_section)):
-            logger.debug("AMP - {}: Load configuration".format(self.NAME))
+            logger.debug(f"AMP - {self.NAME}: Load configuration")
             for param, _ in config.items(amp_section):
                 try:
                     self.configs[param] = config.get_float_value(amp_section, param)
@@ -94,9 +94,13 @@ class GlancesAmp(object):
                     self.configs[param] = config.get_value(amp_section, param).split(',')
                     if len(self.configs[param]) == 1:
                         self.configs[param] = self.configs[param][0]
-                logger.debug("AMP - {}: Load parameter: {} = {}".format(self.NAME, param, self.configs[param]))
+                logger.debug(
+                    f"AMP - {self.NAME}: Load parameter: {param} = {self.configs[param]}"
+                )
         else:
-            logger.debug("AMP - {}: Can not find section {} in the configuration file".format(self.NAME, self.amp_name))
+            logger.debug(
+                f"AMP - {self.NAME}: Can not find section {self.amp_name} in the configuration file"
+            )
             return False
 
         # enable, regex and refresh are mandatories
@@ -104,10 +108,12 @@ class GlancesAmp(object):
         if self.enable():
             for k in ['regex', 'refresh']:
                 if k not in self.configs:
-                    logger.warning("AMP - {}: Can not find configuration key {} in section {}".format(self.NAME, k, self.amp_name))
+                    logger.warning(
+                        f"AMP - {self.NAME}: Can not find configuration key {k} in section {self.amp_name}"
+                    )
                     self.configs['enable'] = 'false'
         else:
-            logger.debug("AMP - {} is disabled".format(self.NAME))
+            logger.debug(f"AMP - {self.NAME} is disabled")
 
         # Init the count to 0
         self.configs['count'] = 0
@@ -116,18 +122,12 @@ class GlancesAmp(object):
 
     def get(self, key):
         """Generic method to get the item in the AMP configuration"""
-        if key in self.configs:
-            return self.configs[key]
-        else:
-            return None
+        return self.configs[key] if key in self.configs else None
 
     def enable(self):
         """Return True|False if the AMP is enabled in the configuration file (enable=true|false)."""
         ret = self.get('enable')
-        if ret is None:
-            return False
-        else:
-            return ret.lower().startswith('true')
+        return False if ret is None else ret.lower().startswith('true')
 
     def regex(self):
         """Return regular expression used to identified the current application."""
@@ -140,10 +140,7 @@ class GlancesAmp(object):
     def one_line(self):
         """Return True|False if the AMP shoukd be displayed in oneline (one_lineline=true|false)."""
         ret = self.get('one_line')
-        if ret is None:
-            return False
-        else:
-            return ret.lower().startswith('true')
+        return False if ret is None else ret.lower().startswith('true')
 
     def time_until_refresh(self):
         """Return time in seconds until refresh."""
@@ -197,7 +194,4 @@ class GlancesAmp(object):
         # Set the number of running process
         self.set_count(len(process_list))
         # Call the children update method
-        if self.should_update():
-            return self.update(process_list)
-        else:
-            return self.result()
+        return self.update(process_list) if self.should_update() else self.result()

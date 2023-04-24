@@ -74,7 +74,7 @@ class GlancesStatsClientSNMP(GlancesStats):
             oid_os_name = clientsnmp.get_by_oid("1.3.6.1.2.1.1.1.0")
             try:
                 self.system_name = self.get_system_name(oid_os_name['1.3.6.1.2.1.1.1.0'])
-                logger.info("SNMP system name detected: {}".format(self.system_name))
+                logger.info(f"SNMP system name detected: {self.system_name}")
             except KeyError:
                 self.system_name = None
                 logger.warning("Cannot detect SNMP system name")
@@ -113,7 +113,7 @@ class GlancesStatsClientSNMP(GlancesStats):
             try:
                 self._plugins[p].update()
             except Exception as e:
-                logger.error("Update {} failed: {}".format(p, e))
+                logger.error(f"Update {p} failed: {e}")
             else:
                 # ... the history
                 self._plugins[p].update_stats_history()

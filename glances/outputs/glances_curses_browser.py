@@ -86,23 +86,19 @@ class GlancesCursesBrowser(_GlancesCurses):
         self.cursor_position = position
 
     def get_pagelines(self, stats):
-        if self._current_page == self._page_max - 1:
-            page_lines = len(stats) % self._page_max_lines
-        else:
-            page_lines = self._page_max_lines
-        return page_lines
+        return (
+            len(stats) % self._page_max_lines
+            if self._current_page == self._page_max - 1
+            else self._page_max_lines
+        )
 
     def _get_status_count(self, stats):
         counts = {}
         for item in stats:
             color = item['status']
             counts[color] = counts.get(color, 0) + 1
-    
-        result = ''
-        for key in counts.keys():
-            result += key + ': ' + str(counts[key]) + ' '
-   
-        return result
+
+        return ''.join(f'{key}: {str(value)} ' for key, value in counts.items())
 
     def _get_stats(self, stats):
         stats_list = None
@@ -121,15 +117,14 @@ class GlancesCursesBrowser(_GlancesCurses):
         
     def cursor_up(self, stats):
         """Set the cursor to position N-1 in the list."""
-        if 0 <= self.cursor_position - 1:
+        if self.cursor_position >= 1:
             self.cursor_position -= 1
+        elif self._current_page < 1:
+            self._current_page = self._page_max - 1
+            self.cursor_position = (len(stats) - 1) % self._page_max_lines
         else:
-            if self._current_page - 1 < 0 :
-                self._current_page = self._page_max - 1
-                self.cursor_position = (len(stats) - 1) % self._page_max_lines 
-            else:
-                self._current_page -= 1
-                self.cursor_position = self._page_max_lines - 1
+            self._current_page -= 1
+            self.cursor_position = self._page_max_lines - 1
 
     def cursor_down(self, stats):
         """Set the cursor to position N-1 in the list."""
@@ -145,7 +140,7 @@ class GlancesCursesBrowser(_GlancesCurses):
 
     def cursor_pageup(self, stats):
         """Set prev page."""
-        if self._current_page - 1 < 0:
+        if self._current_page < 1:
             self._current_page = self._page_max - 1
         else:
             self._current_page -= 1
@@ -164,10 +159,10 @@ class GlancesCursesBrowser(_GlancesCurses):
         self.pressedkey = self.get_key(self.term_window)
         refresh = False
         if self.pressedkey != -1:
-            logger.debug("Key pressed. Code=%s" % self.pressedkey)
+            logger.debug(f"Key pressed. Code={self.pressedkey}")
 
         # Actions...
-        if self.pressedkey == ord('\x1b') or self.pressedkey == ord('q'):
+        if self.pressedkey in [ord('\x1b'), ord('q')]:
             # 'ESC'|'q' > Quit
             self.end()
             logger.info("Stop Glances client browser")
@@ -176,23 +171,27 @@ class GlancesCursesBrowser(_GlancesCurses):
         elif self.pressedkey == 10:
             # 'ENTER' > Run Glances on the selected server
             self.active_server =  self._current_page * self._page_max_lines + self.cursor_position
-            logger.debug("Server {}/{} selected".format(self.active_server, len(stats)))
-        elif self.pressedkey == curses.KEY_UP or self.pressedkey == 65:
+            logger.debug(f"Server {self.active_server}/{len(stats)} selected")
+        elif self.pressedkey in [curses.KEY_UP, 65]:
             # 'UP' > Up in the server list
             self.cursor_up(stats)
-            logger.debug("Server {}/{} selected".format(self.cursor + 1, len(stats)))
-        elif self.pressedkey == curses.KEY_DOWN or self.pressedkey == 66:
+            logger.debug(f"Server {self.cursor + 1}/{len(stats)} selected")
+        elif self.pressedkey in [curses.KEY_DOWN, 66]:
             # 'DOWN' > Down in the server list
             self.cursor_down(stats)
-            logger.debug("Server {}/{} selected".format(self.cursor + 1, len(stats)))
+            logger.debug(f"Server {self.cursor + 1}/{len(stats)} selected")
         elif self.pressedkey == curses.KEY_PPAGE:
              # 'Page UP' > Prev page in the server list
             self.cursor_pageup(stats)
-            logger.debug("PageUP: Server ({}/{}) pages.".format(self._current_page + 1, self._page_max))
+            logger.debug(
+                f"PageUP: Server ({self._current_page + 1}/{self._page_max}) pages."
+            )
         elif self.pressedkey == curses.KEY_NPAGE:
             # 'Page Down' > Next page in the server list
             self.cursor_pagedown(stats)
-            logger.debug("PageDown: Server {}/{} pages".format(self._current_page + 1, self._page_max))
+            logger.debug(
+                f"PageDown: Server {self._current_page + 1}/{self._page_max} pages"
+            )
         elif self.pressedkey == ord('1'):
             self._stats_list = None
             refresh = True
@@ -225,7 +224,7 @@ class GlancesCursesBrowser(_GlancesCurses):
         stats: Dict of dict with servers stats
         """
         # Flush display
-        logger.debug('Servers list: {}'.format(stats))
+        logger.debug(f'Servers list: {stats}')
         self.flush(stats)
 
         # Wait
@@ -235,8 +234,7 @@ class GlancesCursesBrowser(_GlancesCurses):
             # Getkey
             pressedkey = self.__catch_key(stats)
             # Is it an exit or select server key ?
-            exitkey = (
-                pressedkey == ord('\x1b') or pressedkey == ord('q') or pressedkey == 10)
+            exitkey = pressedkey in [ord('\x1b'), ord('q'), 10]
             if not exitkey and pressedkey > -1:
                 # Redraw display
                 self.flush(stats)
@@ -285,7 +283,7 @@ class GlancesCursesBrowser(_GlancesCurses):
         elif len(stats) == 1:
             msg = 'One Glances server available'
         else:
-            msg = '{} Glances servers available'.format(stats_len)
+            msg = f'{stats_len} Glances servers available'
         if self.args.disable_autodiscover:
             msg += ' (auto discover is disabled)'
         if screen_y > 1:
@@ -294,20 +292,17 @@ class GlancesCursesBrowser(_GlancesCurses):
                                      screen_x - x,
                                      self.colors_list['TITLE'])
 
-            msg = '{}'.format(self._get_status_count(stats))
+            msg = f'{self._get_status_count(stats)}'
             self.term_window.addnstr(y + 1, x,
                                      msg,
                                      screen_x - x)
 
         if stats_len > stats_max and screen_y > 2:
-            msg = '{} servers displayed.({}/{}) {}'.format(self.get_pagelines(stats),
-                                                            self._current_page + 1, 
-                                                            self._page_max, 
-                                                            self._get_status_count(stats))
+            msg = f'{self.get_pagelines(stats)} servers displayed.({self._current_page + 1}/{self._page_max}) {self._get_status_count(stats)}'
             self.term_window.addnstr(y + 1, x,
                                      msg,
                                      screen_x - x)
-        
+
         if stats_len == 0:
             return False
 
@@ -331,7 +326,7 @@ class GlancesCursesBrowser(_GlancesCurses):
 
         # Display table header
         xc = x + 2
-        for cpt, c in enumerate(column_def):
+        for c in column_def:
             if xc < screen_x and y < screen_y and c[1] is not None:
                 self.term_window.addnstr(y, xc,
                                          c[1],
@@ -342,15 +337,12 @@ class GlancesCursesBrowser(_GlancesCurses):
 
         # If a servers has been deleted from the list...
         # ... and if the cursor is in the latest position
-        if self.cursor > len(stats) - 1:
-            # Set the cursor position to the latest item
-            self.cursor = len(stats) - 1
-
+        self.cursor = min(self.cursor, len(stats) - 1)
         stats_list = self._get_stats(stats)
-        start_line = self._page_max_lines * self._current_page 
+        start_line = self._page_max_lines * self._current_page
         end_line = start_line + self.get_pagelines(stats_list)
         current_page = stats_list[start_line:end_line]
-        
+
         # Display table
         line = 0
         for v in current_page:
@@ -363,8 +355,7 @@ class GlancesCursesBrowser(_GlancesCurses):
                 try:
                     server_stat[c[0]] = v[c[0]]
                 except KeyError as e:
-                    logger.debug(
-                        "Cannot grab stats {} from server (KeyError: {})".format(c[0], e))
+                    logger.debug(f"Cannot grab stats {c[0]} from server (KeyError: {e})")
                     server_stat[c[0]] = '?'
                 # Display alias instead of name
                 try:
@@ -373,8 +364,6 @@ class GlancesCursesBrowser(_GlancesCurses):
                 except KeyError:
                     pass
 
-            # Display line for server stats
-            cpt = 0
             xc = x
 
             # Is the line selected ?
@@ -391,7 +380,6 @@ class GlancesCursesBrowser(_GlancesCurses):
                     self.term_window.addnstr(
                         y, xc, format(server_stat[c[0]]), c[2], self.colors_list[v['status']])
                     xc += c[2] + self.space_between_column
-                cpt += 1
             # Next line, next server...
             y += 1
             line += 1

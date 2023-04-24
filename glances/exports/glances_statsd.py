@@ -62,8 +62,8 @@ class Export(GlancesExport):
         if not self.export_enable:
             return None
         logger.info(
-            "Stats will be exported to StatsD server: {}:{}".format(self.host,
-                                                                    self.port))
+            f"Stats will be exported to StatsD server: {self.host}:{self.port}"
+        )
         return StatsClient(self.host,
                            int(self.port),
                            prefix=self.prefix)
@@ -73,14 +73,14 @@ class Export(GlancesExport):
         for i in range(len(columns)):
             if not isinstance(points[i], Number):
                 continue
-            stat_name = '{}.{}'.format(name, columns[i])
+            stat_name = f'{name}.{columns[i]}'
             stat_value = points[i]
             try:
                 self.client.gauge(normalize(stat_name),
                                   stat_value)
             except Exception as e:
-                logger.error("Can not export stats to Statsd (%s)" % e)
-        logger.debug("Export {} stats to Statsd".format(name))
+                logger.error(f"Can not export stats to Statsd ({e})")
+        logger.debug(f"Export {name} stats to Statsd")
 
 
 def normalize(name):

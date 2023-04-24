@@ -53,7 +53,4 @@ class Plugin(GlancesPlugin):
                 self.stats = psutil_version_info
             except NameError:
                 pass
-        else:
-            pass
-
         return self.stats

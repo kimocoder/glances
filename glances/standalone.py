@@ -78,11 +78,15 @@ class GlancesStandalone(object):
             # In quiet mode, nothing is displayed
             glances_processes.max_processes = 0
         elif args.stdout:
-            logger.info("Stdout mode is ON, following stats will be displayed: {}".format(args.stdout))
+            logger.info(
+                f"Stdout mode is ON, following stats will be displayed: {args.stdout}"
+            )
             # Init screen
             self.screen = GlancesStdout(config=config, args=args)
         elif args.stdout_csv:
-            logger.info("Stdout CSV mode is ON, following stats will be displayed: {}".format(args.stdout))
+            logger.info(
+                f"Stdout CSV mode is ON, following stats will be displayed: {args.stdout}"
+            )
             # Init screen
             self.screen = GlancesStdoutCsv(config=config, args=args)
         else:
@@ -117,30 +121,25 @@ class GlancesStandalone(object):
 
         # Update stats
         self.stats.update()
-        logger.debug('Stats updated in {} seconds'.format(counter.get()))
+        logger.debug(f'Stats updated in {counter.get()} seconds')
 
         # Export stats
         counter_export = Counter()
         self.stats.export(self.stats)
-        logger.debug('Stats exported in {} seconds'.format(counter_export.get()))
+        logger.debug(f'Stats exported in {counter_export.get()} seconds')
 
         # Patch for issue1326 to avoid < 0 refresh
         adapted_refresh = self.refresh_time - counter.get()
-        adapted_refresh = adapted_refresh if adapted_refresh > 0 else 0
+        adapted_refresh = max(adapted_refresh, 0)
 
-        # Display stats
-        # and wait refresh_time - counter
         if not self.quiet:
             # The update function return True if an exit key 'q' or 'ESC'
             # has been pressed.
-            ret = not self.screen.update(self.stats, duration=adapted_refresh)
-        else:
-            # Nothing is displayed
-            # Break should be done via a signal (CTRL-C)
-            time.sleep(adapted_refresh)
-            ret = True
-
-        return ret
+            return not self.screen.update(self.stats, duration=adapted_refresh)
+        # Nothing is displayed
+        # Break should be done via a signal (CTRL-C)
+        time.sleep(adapted_refresh)
+        return True
 
     def serve_forever(self):
         """Wrapper to the serve_forever function."""
@@ -159,6 +158,7 @@ class GlancesStandalone(object):
 
         # Check Glances version versus PyPI one
         if self.outdated.is_outdated():
-            print("You are using Glances version {}, however version {} is available.".format(
-                self.outdated.installed_version(), self.outdated.latest_version()))
+            print(
+                f"You are using Glances version {self.outdated.installed_version()}, however version {self.outdated.latest_version()} is available."
+            )
             print("You should consider upgrading using: pip install --upgrade glances")

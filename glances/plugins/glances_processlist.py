@@ -132,10 +132,6 @@ class Plugin(GlancesPlugin):
             # Just return the processes list
             stats = glances_processes.getlist()
 
-        elif self.input_method == 'snmp':
-            # No SNMP grab for processes
-            pass
-
         # Update the stats
         self.stats = stats
 

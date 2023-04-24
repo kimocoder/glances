@@ -63,10 +63,9 @@ class Export(GlancesExport):
         if not self.export_enable:
             return None
         try:
-            client = bernhard.Client(host=self.host, port=self.port)
-            return client
+            return bernhard.Client(host=self.host, port=self.port)
         except Exception as e:
-            logger.critical("Connection to Riemann failed : %s " % e)
+            logger.critical(f"Connection to Riemann failed : {e} ")
             return None
 
     def export(self, name, columns, points):
@@ -74,10 +73,13 @@ class Export(GlancesExport):
         for i in range(len(columns)):
             if not isinstance(points[i], Number):
                 continue
-            else:
-                data = {'host': self.hostname, 'service': name + " " + columns[i], 'metric': points[i]}
-                logger.debug(data)
-                try:
-                    self.client.send(data)
-                except Exception as e:
-                    logger.error("Cannot export stats to Riemann (%s)" % e)
+            data = {
+                'host': self.hostname,
+                'service': f"{name} {columns[i]}",
+                'metric': points[i],
+            }
+            logger.debug(data)
+            try:
+                self.client.send(data)
+            except Exception as e:
+                logger.error(f"Cannot export stats to Riemann ({e})")

@@ -47,10 +47,7 @@ class GlancesActions(object):
 
         # Add a timer to avoid any trigger when Glances is started (issue#732)
         # Action can be triggered after refresh * 2 seconds
-        if hasattr(args, 'time'):
-            self.start_timer = Timer(args.time * 2)
-        else:
-            self.start_timer = Timer(3)
+        self.start_timer = Timer(args.time * 2) if hasattr(args, 'time') else Timer(3)
 
     def get(self, stat_name):
         """Get the stat_name criticity."""
@@ -75,31 +72,25 @@ class GlancesActions(object):
         Return True if the commands have been ran.
         """
         if (self.get(stat_name) == criticity and not repeat) or \
-           not self.start_timer.finished():
+               not self.start_timer.finished():
             # Action already executed => Exit
             return False
 
-        logger.debug("{} action {} for {} ({}) with stats {}".format(
-            "Repeat" if repeat else "Run",
-            commands, stat_name, criticity, mustache_dict))
+        logger.debug(
+            f'{"Repeat" if repeat else "Run"} action {commands} for {stat_name} ({criticity}) with stats {mustache_dict}'
+        )
 
         # Run all actions in background
         for cmd in commands:
             # Replace {{arg}} by the dict one (Thk to {Mustache})
-            if pystache_tag:
-                cmd_full = pystache.render(cmd, mustache_dict)
-            else:
-                cmd_full = cmd
+            cmd_full = pystache.render(cmd, mustache_dict) if pystache_tag else cmd
             # Execute the action
-            logger.info("Action triggered for {} ({}): {}".format(stat_name,
-                                                                  criticity,
-                                                                  cmd_full))
-            logger.debug("Stats value for the trigger: {}".format(
-                mustache_dict))
+            logger.info(f"Action triggered for {stat_name} ({criticity}): {cmd_full}")
+            logger.debug(f"Stats value for the trigger: {mustache_dict}")
             try:
                 Popen(cmd_full, shell=True)
             except OSError as e:
-                logger.error("Can't execute the action ({})".format(e))
+                logger.error(f"Can't execute the action ({e})")
 
         self.set(stat_name, criticity)
 

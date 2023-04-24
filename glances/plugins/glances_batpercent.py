@@ -19,6 +19,7 @@
 
 """Battery plugin."""
 
+
 import psutil
 
 from glances.logger import logger
@@ -39,7 +40,7 @@ psutil_tag = True
 try:
     psutil.sensors_battery()
 except Exception as e:
-    logger.error("Cannot grab battery status {}.".format(e))
+    logger.error(f"Cannot grab battery status {e}.")
     psutil_tag = False
 
 
@@ -72,11 +73,6 @@ class Plugin(GlancesPlugin):
             # Update stats
             self.glancesgrabbat.update()
             stats = self.glancesgrabbat.get()
-
-        elif self.input_method == 'snmp':
-            # Update stats using SNMP
-            # Not avalaible
-            pass
 
         # Update the stats
         self.stats = stats

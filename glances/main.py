@@ -32,12 +32,12 @@ from glances.logger import logger
 
 def disable(class_name, var):
     """Set disable_<var> to True in the class class_name."""
-    setattr(class_name, 'disable_' + var, True)
+    setattr(class_name, f'disable_{var}', True)
 
 
 def enable(class_name, var):
     """Set disable_<var> to False in the class class_name."""
-    setattr(class_name, 'disable_' + var, False)
+    setattr(class_name, f'disable_{var}', False)
 
 
 class GlancesMain(object):
@@ -109,7 +109,7 @@ Examples of use:
 
     def init_args(self):
         """Init all the command line arguments."""
-        version = "Glances v" + __version__ + " with psutil v" + psutil_version
+        version = f"Glances v{__version__} with psutil v{psutil_version}"
         parser = argparse.ArgumentParser(
             prog='glances',
             conflict_handler='resolve',
@@ -186,8 +186,14 @@ Examples of use:
                             dest='browser', help='start the client browser (list of servers)')
         parser.add_argument('--disable-autodiscover', action='store_true', default=False,
                             dest='disable_autodiscover', help='disable autodiscover feature')
-        parser.add_argument('-p', '--port', default=None, type=int, dest='port',
-                            help='define the client/server TCP port [default: {}]'.format(self.server_port))
+        parser.add_argument(
+            '-p',
+            '--port',
+            default=None,
+            type=int,
+            dest='port',
+            help=f'define the client/server TCP port [default: {self.server_port}]',
+        )
         parser.add_argument('-B', '--bind', default='0.0.0.0', dest='bind_address',
                             help='bind server to the given IPv4/IPv6 address or hostname')
         parser.add_argument('--username', action='store_true', default=False, dest='username_prompt',
@@ -208,12 +214,23 @@ Examples of use:
                             help='SNMP authentication key (only for SNMPv3)')
         parser.add_argument('--snmp-force', action='store_true', default=False,
                             dest='snmp_force', help='force SNMP mode')
-        parser.add_argument('-t', '--time', default=self.refresh_time, type=float,
-                            dest='time', help='set refresh time in seconds [default: {} sec]'.format(self.refresh_time))
+        parser.add_argument(
+            '-t',
+            '--time',
+            default=self.refresh_time,
+            type=float,
+            dest='time',
+            help=f'set refresh time in seconds [default: {self.refresh_time} sec]',
+        )
         parser.add_argument('-w', '--webserver', action='store_true', default=False,
                             dest='webserver', help='run Glances in web server mode (bottle needed)')
-        parser.add_argument('--cached-time', default=self.cached_time, type=int,
-                            dest='cached_time', help='set the server cache time [default: {} sec]'.format(self.cached_time))
+        parser.add_argument(
+            '--cached-time',
+            default=self.cached_time,
+            type=int,
+            dest='cached_time',
+            help=f'set the server cache time [default: {self.cached_time} sec]',
+        )
         parser.add_argument('--open-web-browser', action='store_true', default=False,
                             dest='open_web_browser', help='try to open the Web UI in the default Web browser')
         # Display options
@@ -272,21 +289,17 @@ Examples of use:
             # Allow users to disable plugins from the glances.conf (issue #1378)
             for s in self.config.sections():
                 if self.config.has_section(s) \
-                   and (self.config.get_bool_value(s, 'disable', False)):
+                       and (self.config.get_bool_value(s, 'disable', False)):
                     disable(args, s)
-                    logger.debug('{} disabled by the configuration file'.format(s))
+                    logger.debug(f'{s} disabled by the configuration file')
 
         # Exporters activation
         if args.export is not None:
             for p in args.export.split(','):
-                setattr(args, 'export_' + p, True)
+                setattr(args, f'export_{p}', True)
 
-        # Client/server Port
         if args.port is None:
-            if args.webserver:
-                args.port = self.web_server_port
-            else:
-                args.port = self.server_port
+            args.port = self.web_server_port if args.webserver else self.server_port
         # Port in the -c URI #996
         if args.client is not None:
             args.client, args.port = (x if x else y for (x, y) in zip(args.client.partition(':')[::2], (args.client, args.port)))
@@ -319,33 +332,27 @@ Examples of use:
                 args.username = self.__get_username(
                     description='Enter the Glances server username: ')
         else:
-            if args.username_used:
-                # A username has been set using the -u option ?
-                args.username = args.username_used
-            else:
-                # Default user name is 'glances'
-                args.username = self.username
-
+            args.username = args.username_used if args.username_used else self.username
         if args.password_prompt or args.username_used:
             # Interactive or file password
             if args.server:
                 args.password = self.__get_password(
-                    description='Define the Glances server password ({} username): '.format(
-                        args.username),
+                    description=f'Define the Glances server password ({args.username} username): ',
                     confirm=True,
-                    username=args.username)
+                    username=args.username,
+                )
             elif args.webserver:
                 args.password = self.__get_password(
-                    description='Define the Glances webserver password ({} username): '.format(
-                        args.username),
+                    description=f'Define the Glances webserver password ({args.username} username): ',
                     confirm=True,
-                    username=args.username)
+                    username=args.username,
+                )
             elif args.client:
                 args.password = self.__get_password(
-                    description='Enter the Glances server password ({} username): '.format(
-                        args.username),
+                    description=f'Enter the Glances server password ({args.username} username): ',
                     clear=True,
-                    username=args.username)
+                    username=args.username,
+                )
         else:
             # Default is no password
             args.password = self.password
@@ -399,7 +406,7 @@ Examples of use:
             logger.info("On Windows OS, export disable the Web interface")
             self.args.quiet = True
             self.args.webserver = False
-        elif not (self.is_standalone() or self.is_client()) and export_tag:
+        elif not self.is_standalone() and not self.is_client() and export_tag:
             logger.critical("Export is only available in standalone or client mode")
             sys.exit(2)
 

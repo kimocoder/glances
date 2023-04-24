@@ -52,7 +52,7 @@ class GlancesSNMPClient(object):
         """Build the results."""
         ret = {}
         for name, val in varBinds:
-            if str(val) == '':
+            if not str(val):
                 ret[name.prettyPrint()] = ''
             else:
                 ret[name.prettyPrint()] = val.prettyPrint()
@@ -63,10 +63,11 @@ class GlancesSNMPClient(object):
 
     def __get_result__(self, errorIndication, errorStatus, errorIndex, varBinds):
         """Put results in table."""
-        ret = {}
-        if not errorIndication or not errorStatus:
-            ret = self.__buid_result(varBinds)
-        return ret
+        return (
+            self.__buid_result(varBinds)
+            if not errorIndication or not errorStatus
+            else {}
+        )
 
     def get_by_oid(self, *oid):
         """SNMP simple request (list of OID).
@@ -93,8 +94,10 @@ class GlancesSNMPClient(object):
     def __bulk_result__(self, errorIndication, errorStatus, errorIndex, varBindTable):
         ret = []
         if not errorIndication or not errorStatus:
-            for varBindTableRow in varBindTable:
-                ret.append(self.__buid_result(varBindTableRow))
+            ret.extend(
+                self.__buid_result(varBindTableRow)
+                for varBindTableRow in varBindTable
+            )
         return ret
 
     def getbulk_by_oid(self, non_repeaters, max_repetitions, *oid):

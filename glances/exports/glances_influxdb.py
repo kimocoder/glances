@@ -69,14 +69,15 @@ class Export(GlancesExport):
                                 database=self.db)
             get_all_db = [i['name'] for i in db.get_list_database()]
         except InfluxDBClientError as e:
-            logger.critical("Cannot connect to InfluxDB database '%s' (%s)" % (self.db, e))
+            logger.critical(f"Cannot connect to InfluxDB database '{self.db}' ({e})")
             sys.exit(2)
 
         if self.db in get_all_db:
-            logger.info(
-                "Stats will be exported to InfluxDB server: {}".format(db._baseurl))
+            logger.info(f"Stats will be exported to InfluxDB server: {db._baseurl}")
         else:
-            logger.critical("InfluxDB database '%s' did not exist. Please create it" % self.db)
+            logger.critical(
+                f"InfluxDB database '{self.db}' did not exist. Please create it"
+            )
             sys.exit(2)
 
         return db
@@ -113,12 +114,11 @@ class Export(GlancesExport):
         """Write the points to the InfluxDB server."""
         # Manage prefix
         if self.prefix is not None:
-            name = self.prefix + '.' + name
+            name = f'{self.prefix}.{name}'
         # Write input to the InfluxDB database
         try:
             self.client.write_points(self._normalize(name, columns, points))
         except Exception as e:
-            logger.error("Cannot export {} stats to InfluxDB ({})".format(name,
-                                                                          e))
+            logger.error(f"Cannot export {name} stats to InfluxDB ({e})")
         else:
-            logger.debug("Export {} stats to InfluxDB".format(name))
+            logger.debug(f"Export {name} stats to InfluxDB")

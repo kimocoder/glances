@@ -83,7 +83,7 @@ class Plugin(GlancesPlugin):
                 temperature = self.__set_type(self.glancesgrabsensors.get('temperature_core'),
                                               'temperature_core')
             except Exception as e:
-                logger.error("Cannot grab sensors temperatures (%s)" % e)
+                logger.error(f"Cannot grab sensors temperatures ({e})")
             else:
                 # Append temperature
                 stats.extend(temperature)
@@ -92,7 +92,7 @@ class Plugin(GlancesPlugin):
                 fan_speed = self.__set_type(self.glancesgrabsensors.get('fan_speed'),
                                             'fan_speed')
             except Exception as e:
-                logger.error("Cannot grab FAN speed (%s)" % e)
+                logger.error(f"Cannot grab FAN speed ({e})")
             else:
                 # Append FAN speed
                 stats.extend(fan_speed)
@@ -101,7 +101,7 @@ class Plugin(GlancesPlugin):
                 hddtemp = self.__set_type(self.hddtemp_plugin.update(),
                                           'temperature_hdd')
             except Exception as e:
-                logger.error("Cannot grab HDD temperature (%s)" % e)
+                logger.error(f"Cannot grab HDD temperature ({e})")
             else:
                 # Append HDD temperature
                 stats.extend(hddtemp)
@@ -110,22 +110,14 @@ class Plugin(GlancesPlugin):
                 batpercent = self.__set_type(self.batpercent_plugin.update(),
                                              'battery')
             except Exception as e:
-                logger.error("Cannot grab battery percent (%s)" % e)
+                logger.error(f"Cannot grab battery percent ({e})")
             else:
                 # Append Batteries %
                 stats.extend(batpercent)
 
-        elif self.input_method == 'snmp':
-            # Update stats using SNMP
-            # No standard:
-            # http://www.net-snmp.org/wiki/index.php/Net-SNMP_and_lm-sensors_on_Ubuntu_10.04
-
-            pass
-
         # Set the alias for each stat
         for stat in stats:
-            alias = self.has_alias(stat["label"].lower())
-            if alias:
+            if alias := self.has_alias(stat["label"].lower()):
                 stat["label"] = alias
 
         # Update the stats
@@ -292,31 +284,26 @@ class GlancesGrabSensors(object):
         else:
             return ret
         for chipname, chip in iteritems(input_list):
-            i = 1
-            for feature in chip:
-                sensors_current = {}
-                # Sensor name
-                if feature.label == '':
-                    sensors_current['label'] = chipname + ' ' + str(i)
-                else:
-                    sensors_current['label'] = feature.label
-                # Fan speed and unit
-                sensors_current['value'] = int(feature.current)
-                sensors_current['unit'] = type
+            for i, feature in enumerate(chip, start=1):
+                sensors_current = {
+                    'label': f'{chipname} {str(i)}'
+                    if feature.label == ''
+                    else feature.label,
+                    'value': int(feature.current),
+                    'unit': type,
+                }
                 # Add sensor to the list
                 ret.append(sensors_current)
-                i += 1
         return ret
 
     def get(self, sensor_type='temperature_core'):
         """Get sensors list."""
         self.__update__()
         if sensor_type == 'temperature_core':
-            ret = [s for s in self.sensors_list if s['unit'] == SENSOR_TEMP_UNIT]
+            return [s for s in self.sensors_list if s['unit'] == SENSOR_TEMP_UNIT]
         elif sensor_type == 'fan_speed':
-            ret = [s for s in self.sensors_list if s['unit'] == SENSOR_FAN_UNIT]
+            return [s for s in self.sensors_list if s['unit'] == SENSOR_FAN_UNIT]
         else:
             # Unknown type
-            logger.debug("Unknown sensor type %s" % sensor_type)
-            ret = []
-        return ret
+            logger.debug(f"Unknown sensor type {sensor_type}")
+            return []

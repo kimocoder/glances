@@ -45,10 +45,7 @@ class CpuPercent(object):
     def get(self, percpu=False):
         """Update and/or return the CPU using the psutil library.
         If percpu, return the percpu stats"""
-        if percpu:
-            return self.__get_percpu()
-        else:
-            return self.__get_cpu()
+        return self.__get_percpu() if percpu else self.__get_cpu()
 
     def __get_cpu(self):
         """Update and/or return the CPU using the psutil library."""

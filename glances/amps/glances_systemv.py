@@ -67,11 +67,13 @@ class Amp(GlancesAmp):
     def update(self, process_list):
         """Update the AMP"""
         # Get the systemctl status
-        logger.debug('{}: Update stats using service {}'.format(self.NAME, self.get('service_cmd')))
+        logger.debug(
+            f"{self.NAME}: Update stats using service {self.get('service_cmd')}"
+        )
         try:
             res = check_output(self.get('service_cmd').split(), stderr=STDOUT).decode('utf-8')
         except OSError as e:
-            logger.debug('{}: Error while executing service ({})'.format(self.NAME, e))
+            logger.debug(f'{self.NAME}: Error while executing service ({e})')
         else:
             status = {'running': 0, 'stopped': 0, 'upstart': 0}
             # For each line
@@ -89,7 +91,7 @@ class Amp(GlancesAmp):
             # Build the output (string) message
             output = 'Services\n'
             for k, v in iteritems(status):
-                output += '{}: {}\n'.format(k, v)
+                output += f'{k}: {v}\n'
             self.set_result(output, separator=' ')
 
         return self.result()

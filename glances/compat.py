@@ -86,14 +86,10 @@ if PY3:
         return iter(d.values())
 
     def u(s, errors='replace'):
-        if isinstance(s, text_type):
-            return s
-        return s.decode('utf-8', errors=errors)
+        return s if isinstance(s, text_type) else s.decode('utf-8', errors=errors)
 
     def b(s, errors='replace'):
-        if isinstance(s, binary_type):
-            return s
-        return s.encode('utf-8', errors=errors)
+        return s if isinstance(s, binary_type) else s.encode('utf-8', errors=errors)
 
     def n(s):
         '''Only in Python 2...
@@ -115,7 +111,7 @@ if PY3:
             res = subprocess.run(command.split(' '),
                                  stdout=subprocess.PIPE).stdout.decode('utf-8')
         except Exception as e:
-            logger.debug('Can not evaluate command {} ({})'.format(command, e))
+            logger.debug(f'Can not evaluate command {command} ({e})')
             res = ''
         return res.rstrip()
 
@@ -181,9 +177,7 @@ else:
         return s.decode('utf-8', errors=errors)
 
     def b(s, errors='replace'):
-        if isinstance(s, binary_type):
-            return s
-        return s.encode('utf-8', errors=errors)
+        return s if isinstance(s, binary_type) else s.encode('utf-8', errors=errors)
 
     def nativestr(s, errors='replace'):
         if isinstance(s, binary_type):
@@ -198,7 +192,7 @@ else:
         try:
             res = subprocess.check_output(command.split(' '))
         except Exception as e:
-            logger.debug('Can not execute command {} ({})'.format(command, e))
+            logger.debug(f'Can not execute command {command} ({e})')
             res = ''
         return res.rstrip()
 
@@ -216,7 +210,10 @@ def subsample(data, sampling):
     if len(data) <= sampling:
         return data
     sampling_length = int(round(len(data) / float(sampling)))
-    return [mean(data[s * sampling_length:(s + 1) * sampling_length]) for s in range(0, sampling)]
+    return [
+        mean(data[s * sampling_length : (s + 1) * sampling_length])
+        for s in range(sampling)
+    ]
 
 
 def time_serie_subsample(data, sampling):
@@ -231,6 +228,12 @@ def time_serie_subsample(data, sampling):
     t = [t[0] for t in data]
     v = [t[1] for t in data]
     sampling_length = int(round(len(data) / float(sampling)))
-    t_subsampled = [t[s * sampling_length:(s + 1) * sampling_length][0] for s in range(0, sampling)]
-    v_subsampled = [mean(v[s * sampling_length:(s + 1) * sampling_length]) for s in range(0, sampling)]
+    t_subsampled = [
+        t[s * sampling_length : (s + 1) * sampling_length][0]
+        for s in range(sampling)
+    ]
+    v_subsampled = [
+        mean(v[s * sampling_length : (s + 1) * sampling_length])
+        for s in range(sampling)
+    ]
     return list(zip(t_subsampled, v_subsampled))

@@ -150,7 +150,7 @@ class Plugin(GlancesPlugin):
                 # Windows or ESXi tips
                 for fs in fs_stat:
                     # Memory stats are grabbed in the same OID table (ignore it)
-                    if fs == 'Virtual Memory' or fs == 'Physical Memory' or fs == 'Real Memory':
+                    if fs in ['Virtual Memory', 'Physical Memory', 'Real Memory']:
                         continue
                     size = int(fs_stat[fs]['size']) * int(fs_stat[fs]['alloc_unit'])
                     used = int(fs_stat[fs]['used']) * int(fs_stat[fs]['alloc_unit'])
@@ -207,10 +207,7 @@ class Plugin(GlancesPlugin):
         # Header
         msg = '{:{width}}'.format('FILE SYS', width=name_max_width)
         ret.append(self.curse_add_line(msg, "TITLE"))
-        if args.fs_free_space:
-            msg = '{:>7}'.format('Free')
-        else:
-            msg = '{:>7}'.format('Used')
+        msg = '{:>7}'.format('Free') if args.fs_free_space else '{:>7}'.format('Used')
         ret.append(self.curse_add_line(msg))
         msg = '{:>7}'.format('Total')
         ret.append(self.curse_add_line(msg))
@@ -219,7 +216,7 @@ class Plugin(GlancesPlugin):
         for i in sorted(self.stats, key=operator.itemgetter(self.get_key())):
             # New line
             ret.append(self.curse_new_line())
-            if i['device_name'] == '' or i['device_name'] == 'none':
+            if i['device_name'] in ['', 'none']:
                 mnt_point = i['mnt_point'][-name_max_width + 1:]
             elif len(i['mnt_point']) + len(i['device_name'].split('/')[-1]) <= name_max_width - 3:
                 # If possible concatenate mode info... Glances touch inside :)

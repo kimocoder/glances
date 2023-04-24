@@ -145,7 +145,7 @@ class Plugin(GlancesPlugin):
         ret.append(self.curse_add_line(msg, "TITLE"))
         # Core number
         if 'cpucore' in self.stats and self.stats['cpucore'] > 0:
-            msg = '{}-core'.format(int(self.stats['cpucore']))
+            msg = f"{int(self.stats['cpucore'])}-core"
             ret.append(self.curse_add_line(msg))
         # New line
         ret.append(self.curse_new_line())
@@ -153,17 +153,19 @@ class Plugin(GlancesPlugin):
         msg = '{:8}'.format('1 min:')
         ret.append(self.curse_add_line(msg))
         msg = '{:>6.2f}'.format(self.stats['min1'])
-        ret.append(self.curse_add_line(msg))
-        # New line
-        ret.append(self.curse_new_line())
+        ret.extend((self.curse_add_line(msg), self.curse_new_line()))
         # 5min load
         msg = '{:8}'.format('5 min:')
         ret.append(self.curse_add_line(msg))
         msg = '{:>6.2f}'.format(self.stats['min5'])
-        ret.append(self.curse_add_line(
-            msg, self.get_views(key='min5', option='decoration')))
-        # New line
-        ret.append(self.curse_new_line())
+        ret.extend(
+            (
+                self.curse_add_line(
+                    msg, self.get_views(key='min5', option='decoration')
+                ),
+                self.curse_new_line(),
+            )
+        )
         # 15min load
         msg = '{:8}'.format('15 min:')
         ret.append(self.curse_add_line(msg))

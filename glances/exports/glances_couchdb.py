@@ -60,21 +60,17 @@ class Export(GlancesExport):
             return None
 
         if self.user is None:
-            server_uri = 'http://{}:{}/'.format(self.host,
-                                                self.port)
+            server_uri = f'http://{self.host}:{self.port}/'
         else:
-            server_uri = 'http://{}:{}@{}:{}/'.format(self.user,
-                                                      self.password,
-                                                      self.host,
-                                                      self.port)
+            server_uri = f'http://{self.user}:{self.password}@{self.host}:{self.port}/'
 
         try:
             s = couchdb.Server(server_uri)
         except Exception as e:
-            logger.critical("Cannot connect to CouchDB server %s (%s)" % (server_uri, e))
+            logger.critical(f"Cannot connect to CouchDB server {server_uri} ({e})")
             sys.exit(2)
         else:
-            logger.info("Connected to the CouchDB server %s" % server_uri)
+            logger.info(f"Connected to the CouchDB server {server_uri}")
 
         try:
             s[self.db]
@@ -83,7 +79,7 @@ class Export(GlancesExport):
             # Create it...
             s.create(self.db)
         else:
-            logger.info("There is already a %s database" % self.db)
+            logger.info(f"There is already a {self.db} database")
 
         return s
 
@@ -93,7 +89,7 @@ class Export(GlancesExport):
 
     def export(self, name, columns, points):
         """Write the points to the CouchDB server."""
-        logger.debug("Export {} stats to CouchDB".format(name))
+        logger.debug(f"Export {name} stats to CouchDB")
 
         # Create DB input
         data = dict(zip(columns, points))
@@ -107,4 +103,4 @@ class Export(GlancesExport):
         try:
             self.client[self.db].save(data)
         except Exception as e:
-            logger.error("Cannot export {} stats to CouchDB ({})".format(name, e))
+            logger.error(f"Cannot export {name} stats to CouchDB ({e})")

@@ -87,12 +87,12 @@ class FolderList(object):
         The list is defined in the Glances configuration file.
         """
         for l in range(1, self.__folder_list_max_size + 1):
-            value = {}
-            key = 'folder_' + str(l) + '_'
+            key = f'folder_{str(l)}_'
 
-            # Path is mandatory
-            value['indice'] = str(l)
-            value['path'] = self.config.get_value(section, key + 'path')
+            value = {
+                'indice': str(l),
+                'path': self.config.get_value(section, f'{key}path'),
+            }
             if value['path'] is None:
                 continue
             else:
@@ -100,21 +100,25 @@ class FolderList(object):
 
             # Optional conf keys
             # Refresh time
-            value['refresh'] = int(self.config.get_value(section,
-                                                         key + 'refresh',
-                                                         default=self.__default_refresh))
+            value['refresh'] = int(
+                self.config.get_value(
+                    section, f'{key}refresh', default=self.__default_refresh
+                )
+            )
             self.timer_folders.append(Timer(value['refresh']))
             # Thesholds
             for i in ['careful', 'warning', 'critical']:
                 # Read threshold
                 value[i] = self.config.get_value(section, key + i)
                 if value[i] is not None:
-                    logger.debug("{} threshold for folder {} is {}".format(i, value["path"], value[i]))
+                    logger.debug(f'{i} threshold for folder {value["path"]} is {value[i]}')
                 # Read action
                 action = self.config.get_value(section, key + i + '_action')
                 if action is not None:
-                    value[i + '_action'] = action
-                    logger.debug("{} action for folder {} is {}".format(i, value["path"], value[i + '_action']))
+                    value[f'{i}_action'] = action
+                    logger.debug(
+                        f"""{i} action for folder {value["path"]} is {value[f'{i}_action']}"""
+                    )
 
             # Add the item to the list
             self.__folder_list.append(value)
@@ -176,12 +180,8 @@ class FolderList(object):
             try:
                 self.__folder_list[i]['size'] = self.__folder_size(self.path(i))
             except OSError as e:
-                logger.debug('Cannot get folder size ({}). Error: {}'.format(self.path(i), e))
-                if e.errno == 13:
-                    # Permission denied
-                    self.__folder_list[i]['size'] = '!'
-                else:
-                    self.__folder_list[i]['size'] = '?'
+                logger.debug(f'Cannot get folder size ({self.path(i)}). Error: {e}')
+                self.__folder_list[i]['size'] = '!' if e.errno == 13 else '?'
             # Reset the timer
             self.timer_folders[i].reset()
 

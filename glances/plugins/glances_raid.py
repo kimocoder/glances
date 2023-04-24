@@ -19,6 +19,7 @@
 
 """RAID plugin."""
 
+
 from glances.compat import iterkeys
 from glances.logger import logger
 from glances.plugins.glances_plugin import GlancesPlugin
@@ -28,7 +29,7 @@ try:
     from pymdstat import MdStat
 except ImportError as e:
     import_error_tag = True
-    logger.warning("Missing Python Lib ({}), Raid plugin is disabled".format(e))
+    logger.warning(f"Missing Python Lib ({e}), Raid plugin is disabled")
 else:
     import_error_tag = False
 
@@ -64,13 +65,8 @@ class Plugin(GlancesPlugin):
                 mds = MdStat()
                 stats = mds.get_stats()['arrays']
             except Exception as e:
-                logger.debug("Can not grab RAID stats (%s)" % e)
+                logger.debug(f"Can not grab RAID stats ({e})")
                 return self.stats
-
-        elif self.input_method == 'snmp':
-            # Update stats using SNMP
-            # No standard way for the moment...
-            pass
 
         # Update the stats
         self.stats = stats
@@ -110,7 +106,7 @@ class Plugin(GlancesPlugin):
             # Data: RAID type name | disk used | disk available
             array_type = self.stats[array]['type'].upper() if self.stats[array]['type'] is not None else 'UNKNOWN'
             # Build the full name = array type + array name
-            full_name = '{} {}'.format(array_type, array)
+            full_name = f'{array_type} {array}'
             msg = '{:{width}}'.format(full_name,
                                       width=name_max_width)
             ret.append(self.curse_add_line(msg))
@@ -126,18 +122,15 @@ class Plugin(GlancesPlugin):
                 ret.append(self.curse_add_line(msg, status))
             elif self.stats[array]['status'] == 'inactive':
                 ret.append(self.curse_new_line())
-                msg = '└─ Status {}'.format(self.stats[array]['status'])
+                msg = f"└─ Status {self.stats[array]['status']}"
                 ret.append(self.curse_add_line(msg, status))
                 components = sorted(iterkeys(self.stats[array]['components']))
                 for i, component in enumerate(components):
-                    if i == len(components) - 1:
-                        tree_char = '└─'
-                    else:
-                        tree_char = '├─'
+                    tree_char = '└─' if i == len(components) - 1 else '├─'
                     ret.append(self.curse_new_line())
-                    msg = '   {} disk {}: '.format(tree_char, self.stats[array]['components'][component])
+                    msg = f"   {tree_char} disk {self.stats[array]['components'][component]}: "
                     ret.append(self.curse_add_line(msg))
-                    msg = '{}'.format(component)
+                    msg = f'{component}'
                     ret.append(self.curse_add_line(msg))
             if self.stats[array]['type'] != 'raid0' and (self.stats[array]['used'] < self.stats[array]['available']):
                 # Display current array configuration
@@ -146,7 +139,7 @@ class Plugin(GlancesPlugin):
                 ret.append(self.curse_add_line(msg, status))
                 if len(self.stats[array]['config']) < 17:
                     ret.append(self.curse_new_line())
-                    msg = '   └─ {}'.format(self.stats[array]['config'].replace('_', 'A'))
+                    msg = f"   └─ {self.stats[array]['config'].replace('_', 'A')}"
                     ret.append(self.curse_add_line(msg))
 
         return ret

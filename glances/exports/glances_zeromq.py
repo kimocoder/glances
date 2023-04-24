@@ -60,17 +60,17 @@ class Export(GlancesExport):
         if not self.export_enable:
             return None
 
-        server_uri = 'tcp://{}:{}'.format(self.host, self.port)
+        server_uri = f'tcp://{self.host}:{self.port}'
 
         try:
             self.context = zmq.Context()
             publisher = self.context.socket(zmq.PUB)
             publisher.bind(server_uri)
         except Exception as e:
-            logger.critical("Cannot connect to ZeroMQ server %s (%s)" % (server_uri, e))
+            logger.critical(f"Cannot connect to ZeroMQ server {server_uri} ({e})")
             sys.exit(2)
         else:
-            logger.info("Connected to the ZeroMQ server %s" % server_uri)
+            logger.info(f"Connected to the ZeroMQ server {server_uri}")
 
         return publisher
 
@@ -83,13 +83,13 @@ class Export(GlancesExport):
 
     def export(self, name, columns, points):
         """Write the points to the ZeroMQ server."""
-        logger.debug("Export {} stats to ZeroMQ".format(name))
+        logger.debug(f"Export {name} stats to ZeroMQ")
 
         # Create DB input
         data = dict(zip(columns, points))
 
         # Do not publish empty stats
-        if data == {}:
+        if not data:
             return False
 
         # Glances envelopes the stats in a publish message with two frames:
@@ -105,6 +105,6 @@ class Export(GlancesExport):
         try:
             self.client.send_multipart(message)
         except Exception as e:
-            logger.error("Cannot export {} stats to ZeroMQ ({})".format(name, e))
+            logger.error(f"Cannot export {name} stats to ZeroMQ ({e})")
 
         return True

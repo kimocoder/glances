@@ -44,6 +44,7 @@ Check for admin access.  If no admin access, disable SMART plugin.
 If smartmontools is not installed, we should catch the error upstream in plugin initialization.
 """
 
+
 from glances.plugins.glances_plugin import GlancesPlugin
 from glances.logger import logger
 from glances.main import disable
@@ -54,7 +55,7 @@ try:
     from pySMART import DeviceList
 except ImportError as e:
     import_error_tag = True
-    logger.warning("Missing Python Lib ({}), HDD Smart plugin is disabled".format(e))
+    logger.warning(f"Missing Python Lib ({e}), HDD Smart plugin is disabled")
 else:
     import_error_tag = False
 
@@ -71,18 +72,17 @@ def is_admin():
     function to return False.
     """
 
-    if os.name == 'nt':
-        import ctypes
-        import traceback
-        # WARNING: requires Windows XP SP2 or higher!
-        try:
-            return ctypes.windll.shell32.IsUserAnAdmin()
-        except:
-            traceback.print_exc()
-            return False
-    else:
+    if os.name != 'nt':
         # Check for root on Posix
         return os.getuid() == 0
+    import ctypes
+    import traceback
+    # WARNING: requires Windows XP SP2 or higher!
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        traceback.print_exc()
+        return False
 
 
 def convert_attribute_to_dict(attr):
@@ -126,9 +126,7 @@ def get_smart_data():
             DEVKEY: str(dev)
         })
         for attribute in dev.attributes:
-            if attribute is None:
-                pass
-            else:
+            if attribute is not None:
                 attribdict = convert_attribute_to_dict(attribute)
 
                 # we will use the attribute number as the key
@@ -176,9 +174,6 @@ class Plugin(GlancesPlugin):
 
         if self.input_method == 'local':
             stats = get_smart_data()
-        elif self.input_method == 'snmp':
-            pass
-
         # Update the stats
         self.stats = stats
 

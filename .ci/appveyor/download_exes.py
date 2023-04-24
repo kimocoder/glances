@@ -62,10 +62,9 @@ def safe_makedirs(path):
     try:
         os.makedirs(path)
     except OSError as err:
-        if err.errno == errno.EEXIST:
-            if not os.path.isdir(path):
-                raise
-        else:
+        if err.errno != errno.EEXIST:
+            raise
+        if not os.path.isdir(path):
             raise
 
 
@@ -93,22 +92,20 @@ def download_file(url):
 
 def get_file_urls(options):
     session = requests.Session()
-    data = session.get(
-        BASE_URL + '/projects/' + options.user + '/' + options.project)
+    data = session.get(f'{BASE_URL}/projects/{options.user}/{options.project}')
     data = data.json()
 
     urls = []
     for job in (job['jobId'] for job in data['build']['jobs']):
-        job_url = BASE_URL + '/buildjobs/' + job + '/artifacts'
+        job_url = f'{BASE_URL}/buildjobs/{job}/artifacts'
         data = session.get(job_url)
         data = data.json()
         for item in data:
-            file_url = job_url + '/' + item['fileName']
+            file_url = f'{job_url}/' + item['fileName']
             urls.append(file_url)
     if not urls:
         sys.exit("no artifacts found")
-    for url in sorted(urls, key=lambda x: os.path.basename(x)):
-        yield url
+    yield from sorted(urls, key=lambda x: os.path.basename(x))
 
 
 def rename_27_wheels():
@@ -134,8 +131,10 @@ def main(options):
     expected = len(PY_VERSIONS) * 4
     got = len(files)
     if expected != got:
-        print(hilite("expected %s files, got %s" % (expected, got), ok=False),
-              file=sys.stderr)
+        print(
+            hilite(f"expected {expected} files, got {got}", ok=False),
+            file=sys.stderr,
+        )
     rename_27_wheels()
 
 

@@ -19,6 +19,7 @@
 
 """IP plugin."""
 
+
 import threading
 from json import loads
 
@@ -32,7 +33,7 @@ try:
     import netifaces
 except ImportError as e:
     import_error_tag = True
-    logger.warning("Missing Python Lib ({}), IP plugin is disabled".format(e))
+    logger.warning(f"Missing Python Lib ({e}), IP plugin is disabled")
 else:
     import_error_tag = False
 
@@ -79,7 +80,7 @@ class Plugin(GlancesPlugin):
             try:
                 default_gw = netifaces.gateways()['default'][netifaces.AF_INET]
             except (KeyError, AttributeError) as e:
-                logger.debug("Cannot grab the default gateway ({})".format(e))
+                logger.debug(f"Cannot grab the default gateway ({e})")
             else:
                 try:
                     stats['address'] = netifaces.ifaddresses(default_gw[1])[netifaces.AF_INET][0]['addr']
@@ -88,11 +89,7 @@ class Plugin(GlancesPlugin):
                     stats['gateway'] = netifaces.gateways()['default'][netifaces.AF_INET][0]
                     stats['public_address'] = self.public_address
                 except (KeyError, AttributeError) as e:
-                    logger.debug("Cannot grab IP information: {}".format(e))
-        elif self.input_method == 'snmp':
-            # Not implemented yet
-            pass
-
+                    logger.debug(f"Cannot grab IP information: {e}")
         # Update the stats
         self.stats = stats
 
@@ -123,23 +120,21 @@ class Plugin(GlancesPlugin):
         msg = 'IP '
         ret.append(self.curse_add_line(msg, 'TITLE'))
         if 'address' in self.stats:
-            msg = '{}'.format(self.stats['address'])
+            msg = f"{self.stats['address']}"
             ret.append(self.curse_add_line(msg))
         if 'mask_cidr' in self.stats:
             # VPN with no internet access (issue #842)
-            msg = '/{}'.format(self.stats['mask_cidr'])
+            msg = f"/{self.stats['mask_cidr']}"
             ret.append(self.curse_add_line(msg))
         try:
-            msg_pub = '{}'.format(self.stats['public_address'])
+            msg_pub = f"{self.stats['public_address']}"
         except (UnicodeEncodeError, KeyError):
             # Add KeyError exception (see https://github.com/nicolargo/glances/issues/1469)
             pass
         else:
             if self.stats['public_address'] is not None:
                 msg = ' Pub '
-                ret.append(self.curse_add_line(msg, 'TITLE'))
-                ret.append(self.curse_add_line(msg_pub))
-
+                ret.extend((self.curse_add_line(msg, 'TITLE'), self.curse_add_line(msg_pub)))
         return ret
 
     @staticmethod
@@ -148,7 +143,7 @@ class Plugin(GlancesPlugin):
 
         Example: '255.255.255.0' will return 24
         """
-        return sum([int(x) << 8 for x in ip.split('.')]) // 8128
+        return sum(int(x) << 8 for x in ip.split('.')) // 8128
 
 
 class PublicIpAddress(object):
@@ -173,14 +168,14 @@ class PublicIpAddress(object):
             if q.qsize() > 0:
                 ip = q.get()
 
-        return ', '.join(set([x.strip() for x in ip.split(',')]))
+        return ', '.join({x.strip() for x in ip.split(',')})
 
     def _get_ip_public(self, queue_target, url, json=False, key=None):
         """Request the url service and put the result in the queue_target."""
         try:
             response = urlopen(url, timeout=self.timeout).read().decode('utf-8')
         except Exception as e:
-            logger.debug("IP plugin - Cannot open URL {} ({})".format(url, e))
+            logger.debug(f"IP plugin - Cannot open URL {url} ({e})")
             queue_target.put(None)
         else:
             # Request depend on service

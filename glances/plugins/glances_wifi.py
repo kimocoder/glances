@@ -19,6 +19,7 @@
 
 """Wifi plugin."""
 
+
 import operator
 
 from glances.compat import nativestr, PY3
@@ -33,7 +34,7 @@ try:
     from wifi.exceptions import InterfaceError
 except ImportError as e:
     import_error_tag = True
-    logger.warning("Missing Python Lib ({}), Wifi plugin is disabled".format(e))
+    logger.warning(f"Missing Python Lib ({e}), Wifi plugin is disabled")
 else:
     import_error_tag = False
 
@@ -99,12 +100,10 @@ class Plugin(GlancesPlugin):
                     wifi_cells = Cell.all(net)
                 except InterfaceError as e:
                     # Not a Wifi interface
-                    logger.debug("WIFI plugin: Scan InterfaceError ({})".format(e))
-                    pass
+                    logger.debug(f"WIFI plugin: Scan InterfaceError ({e})")
                 except Exception as e:
                     # Other error
-                    logger.debug("WIFI plugin: Can not grab cellule stats ({})".format(e))
-                    pass
+                    logger.debug(f"WIFI plugin: Can not grab cellule stats ({e})")
                 else:
                     for wifi_cell in wifi_cells:
                         hotspot = {
@@ -117,12 +116,6 @@ class Plugin(GlancesPlugin):
                         }
                         # Add the hotspot to the list
                         stats.append(hotspot)
-
-        elif self.input_method == 'snmp':
-            # Update stats using SNMP
-
-            # Not implemented yet
-            pass
 
         # Update the stats
         self.stats = stats
@@ -191,10 +184,10 @@ class Plugin(GlancesPlugin):
             hotspotname = i['ssid']
             # Add the encryption type (if it is available)
             if i['encrypted']:
-                hotspotname += ' {}'.format(i['encryption_type'])
+                hotspotname += f" {i['encryption_type']}"
             # Cut hotspotname if it is too long
             if len(hotspotname) > ifname_max_width:
-                hotspotname = '_' + hotspotname[-ifname_max_width + 1:]
+                hotspotname = f'_{hotspotname[-ifname_max_width + 1:]}'
             # Add the new hotspot to the message
             msg = '{:{width}}'.format(nativestr(hotspotname),
                                       width=ifname_max_width)

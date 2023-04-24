@@ -43,11 +43,7 @@ def user_config_dir():
         path = os.path.expanduser('~/Library/Application Support')
     else:
         path = os.environ.get('XDG_CONFIG_HOME') or os.path.expanduser('~/.config')
-    if path is None:
-        path = ''
-    else:
-        path = os.path.join(path, 'glances')
-
+    path = '' if path is None else os.path.join(path, 'glances')
     return path
 
 
@@ -83,11 +79,7 @@ def system_config_dir():
         path = '/usr/local/etc'
     else:
         path = os.environ.get('APPDATA')
-    if path is None:
-        path = ''
-    else:
-        path = os.path.join(path, 'glances')
-
+    path = '' if path is None else os.path.join(path, 'glances')
     return path
 
 
@@ -131,23 +123,26 @@ class Config(object):
         if self.config_dir:
             paths.append(self.config_dir)
 
-        paths.append(os.path.join(user_config_dir(), self.config_filename))
-        paths.append(os.path.join(system_config_dir(), self.config_filename))
-
+        paths.extend(
+            (
+                os.path.join(user_config_dir(), self.config_filename),
+                os.path.join(system_config_dir(), self.config_filename),
+            )
+        )
         return paths
 
     def read(self):
         """Read the config file, if it exists. Using defaults otherwise."""
         for config_file in self.config_file_paths():
-            logger.info('Search glances.conf file in {}'.format(config_file))
+            logger.info(f'Search glances.conf file in {config_file}')
             if os.path.exists(config_file):
                 try:
                     with open(config_file, encoding='utf-8') as f:
                         self.parser.read_file(f)
                         self.parser.read(f)
-                    logger.info("Read configuration file '{}'".format(config_file))
+                    logger.info(f"Read configuration file '{config_file}'")
                 except UnicodeDecodeError as err:
-                    logger.error("Can not read configuration file '{}': {}".format(config_file, err))
+                    logger.error(f"Can not read configuration file '{config_file}': {err}")
                     sys.exit(1)
                 # Save the loaded configuration file path (issue #374)
                 self._loaded_config_file = config_file
@@ -254,13 +249,10 @@ class Config(object):
                         option_header=None,
                         cwc=['50', '70', '90']):
         """Set default values for careful, warning and critical."""
-        if option_header is None:
-            header = ''
-        else:
-            header = option_header + '_'
-        self.set_default(section, header + 'careful', cwc[0])
-        self.set_default(section, header + 'warning', cwc[1])
-        self.set_default(section, header + 'critical', cwc[2])
+        header = '' if option_header is None else f'{option_header}_'
+        self.set_default(section, f'{header}careful', cwc[0])
+        self.set_default(section, f'{header}warning', cwc[1])
+        self.set_default(section, f'{header}critical', cwc[2])
 
     def set_default(self, section, option,
                     default):

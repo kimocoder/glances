@@ -56,11 +56,6 @@ class Plugin(GlancesPlugin):
             # Update stats using the standard system lib
             stats = self.glancesgrabhddtemp.get()
 
-        else:
-            # Update stats using SNMP
-            # Not available for the moment
-            pass
-
         # Update the stats
         self.stats = stats
 
@@ -115,11 +110,10 @@ class GlancesGrabHDDTemp(object):
         devices = (len(fields) - 1) // 5
         for item in range(devices):
             offset = item * 5
-            hddtemp_current = {}
             device = os.path.basename(nativestr(fields[offset + 1]))
             temperature = fields[offset + 3]
             unit = nativestr(fields[offset + 4])
-            hddtemp_current['label'] = device
+            hddtemp_current = {'label': device}
             try:
                 hddtemp_current['value'] = float(temperature)
             except ValueError:
@@ -137,12 +131,14 @@ class GlancesGrabHDDTemp(object):
             sck.connect((self.host, self.port))
             data = b''
             while True:
-                received = sck.recv(4096)
-                if not received:
+                if received := sck.recv(4096):
+                    data += received
+                else:
                     break
-                data += received
         except Exception as e:
-            logger.debug("Cannot connect to an HDDtemp server ({}:{} => {})".format(self.host, self.port, e))
+            logger.debug(
+                f"Cannot connect to an HDDtemp server ({self.host}:{self.port} => {e})"
+            )
             logger.debug("Disable the HDDtemp module. Use the --disable-hddtemp to hide the previous message.")
             if self.args is not None:
                 self.args.disable_hddtemp = True
@@ -150,7 +146,7 @@ class GlancesGrabHDDTemp(object):
         finally:
             sck.close()
             if data != "":
-                logger.debug("Received data from the HDDtemp server: {}".format(data))
+                logger.debug(f"Received data from the HDDtemp server: {data}")
 
         return data
 

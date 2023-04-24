@@ -59,23 +59,23 @@ class Export(GlancesExport):
             return None
 
         # Build the server URI with host and port
-        server_uri = '{}:{}'.format(self.host, self.port)
+        server_uri = f'{self.host}:{self.port}'
 
         try:
             s = KafkaProducer(bootstrap_servers=server_uri,
                               value_serializer=lambda v: json.dumps(v).encode('utf-8'),
                               compression_type=self.compression)
         except Exception as e:
-            logger.critical("Cannot connect to Kafka server %s (%s)" % (server_uri, e))
+            logger.critical(f"Cannot connect to Kafka server {server_uri} ({e})")
             sys.exit(2)
         else:
-            logger.info("Connected to the Kafka server %s" % server_uri)
+            logger.info(f"Connected to the Kafka server {server_uri}")
 
         return s
 
     def export(self, name, columns, points):
         """Write the points to the kafka server."""
-        logger.debug("Export {} stats to Kafka".format(name))
+        logger.debug(f"Export {name} stats to Kafka")
 
         # Create DB input
         data = dict(zip(columns, points))
@@ -88,7 +88,7 @@ class Export(GlancesExport):
                              key=name,
                              value=data)
         except Exception as e:
-            logger.error("Cannot export {} stats to Kafka ({})".format(name, e))
+            logger.error(f"Cannot export {name} stats to Kafka ({e})")
 
     def exit(self):
         """Close the Kafka export module."""

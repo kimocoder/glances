@@ -23,6 +23,7 @@ Supported Cloud API:
 - OpenStack meta data (class ThreadOpenStack, see bellow): AWS, OVH...
 """
 
+
 import threading
 
 from glances.compat import iteritems, to_ascii
@@ -35,7 +36,7 @@ try:
 except ImportError as e:
     import_error_tag = True
     # Display debu message if import KeyError
-    logger.warning("Missing Python Lib ({}), Cloud plugin is disabled".format(e))
+    logger.warning(f"Missing Python Lib ({e}), Cloud plugin is disabled")
 else:
     import_error_tag = False
 
@@ -112,13 +113,11 @@ class Plugin(GlancesPlugin):
 
         # Generate the output
         if 'instance-type' in self.stats \
-           and 'instance-id' in self.stats \
-           and 'region' in self.stats:
+               and 'instance-id' in self.stats \
+               and 'region' in self.stats:
             msg = 'Cloud '
             ret.append(self.curse_add_line(msg, "TITLE"))
-            msg = '{} instance {} ({})'.format(self.stats['instance-type'],
-                                               self.stats['instance-id'],
-                                               self.stats['region'])
+            msg = f"{self.stats['instance-type']} instance {self.stats['instance-id']} ({self.stats['region']})"
             ret.append(self.curse_add_line(msg))
 
         # Return the message with decoration
@@ -159,12 +158,14 @@ class ThreadOpenStack(threading.Thread):
             return False
 
         for k, v in iteritems(self.OPENSTACK_API_METADATA):
-            r_url = '{}/{}'.format(self.OPENSTACK_API_URL, v)
+            r_url = f'{self.OPENSTACK_API_URL}/{v}'
             try:
                 # Local request, a timeout of 3 seconds is OK
                 r = requests.get(r_url, timeout=3)
             except Exception as e:
-                logger.debug('cloud plugin - Cannot connect to the OpenStack metadata API {}: {}'.format(r_url, e))
+                logger.debug(
+                    f'cloud plugin - Cannot connect to the OpenStack metadata API {r_url}: {e}'
+                )
                 break
             else:
                 if r.ok:

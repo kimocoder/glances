@@ -142,14 +142,13 @@ class GlancesProcesses(object):
 
         :returns: int or None
         """
-        if LINUX:
-            # XXX: waiting for https://github.com/giampaolo/psutil/issues/720
-            try:
-                with open('/proc/sys/kernel/pid_max', 'rb') as f:
-                    return int(f.read())
-            except (OSError, IOError):
-                return None
-        else:
+        if not LINUX:
+            return None
+        # XXX: waiting for https://github.com/giampaolo/psutil/issues/720
+        try:
+            with open('/proc/sys/kernel/pid_max', 'rb') as f:
+                return int(f.read())
+        except (OSError, IOError):
             return None
 
     @property
@@ -194,10 +193,7 @@ class GlancesProcesses(object):
     @property
     def sort_reverse(self):
         """Return True to sort processes in reverse 'key' order, False instead."""
-        if self.sort_key == 'name' or self.sort_key == 'username':
-            return False
-
-        return True
+        return self.sort_key not in ['name', 'username']
 
     def max_values(self):
         """Return the max values dict."""
@@ -213,9 +209,7 @@ class GlancesProcesses(object):
 
     def reset_max_values(self):
         """Reset the maximum values dict."""
-        self._max_values = {}
-        for k in self._max_values_list:
-            self._max_values[k] = 0.0
+        self._max_values = {k: 0.0 for k in self._max_values_list}
 
     def update(self):
         """Update the processes stats."""
@@ -292,7 +286,7 @@ class GlancesProcesses(object):
 
                     if LINUX:
                         try:
-                            extended['memory_swap'] = sum([v.swap for v in top_process.memory_maps()])
+                            extended['memory_swap'] = sum(v.swap for v in top_process.memory_maps())
                         except psutil.NoSuchProcess:
                             pass
                         except (psutil.AccessDenied, NotImplementedError):
@@ -308,10 +302,10 @@ class GlancesProcesses(object):
                         extended['tcp'] = None
                         extended['udp'] = None
                 except (psutil.NoSuchProcess, ValueError, AttributeError) as e:
-                    logger.error('Can not grab extended stats ({})'.format(e))
+                    logger.error(f'Can not grab extended stats ({e})')
                     extended['extended_stats'] = False
                 else:
-                    logger.debug('Grab extended stats for process {}'.format(proc['pid']))
+                    logger.debug(f"Grab extended stats for process {proc['pid']}")
                     extended['extended_stats'] = True
                 proc.update(extended)
             first = False

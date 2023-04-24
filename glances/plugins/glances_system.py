@@ -71,7 +71,7 @@ def _linux_os_release():
         if 'NAME' in ashtray:
             pretty_name = ashtray['NAME']
         if 'VERSION_ID' in ashtray:
-            pretty_name += ' {}'.format(ashtray['VERSION_ID'])
+            pretty_name += f" {ashtray['VERSION_ID']}"
 
     return pretty_name
 
@@ -134,9 +134,8 @@ class Plugin(GlancesPlugin):
             if stats['os_name'] == "Linux":
                 stats['hr_name'] = stats['linux_distro']
             else:
-                stats['hr_name'] = '{} {}'.format(
-                    stats['os_name'], stats['os_version'])
-            stats['hr_name'] += ' {}'.format(stats['platform'])
+                stats['hr_name'] = f"{stats['os_name']} {stats['os_version']}"
+            stats['hr_name'] += f" {stats['platform']}"
 
         elif self.input_method == 'snmp':
             # Update stats using SNMP
@@ -184,17 +183,12 @@ class Plugin(GlancesPlugin):
         ret.append(self.curse_add_line(msg, "TITLE"))
         # System info
         if self.stats['os_name'] == "Linux" and self.stats['linux_distro']:
-            msg = ' ({} {} / {} {})'.format(self.stats['linux_distro'],
-                                            self.stats['platform'],
-                                            self.stats['os_name'],
-                                            self.stats['os_version'])
+            msg = f" ({self.stats['linux_distro']} {self.stats['platform']} / {self.stats['os_name']} {self.stats['os_version']})"
         else:
             try:
-                msg = ' ({} {} {})'.format(self.stats['os_name'],
-                                           self.stats['os_version'],
-                                           self.stats['platform'])
+                msg = f" ({self.stats['os_name']} {self.stats['os_version']} {self.stats['platform']})"
             except Exception:
-                msg = ' ({})'.format(self.stats['os_name'])
+                msg = f" ({self.stats['os_name']})"
         ret.append(self.curse_add_line(msg, optional=True))
 
         # Return the message with decoration

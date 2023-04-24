@@ -39,7 +39,7 @@ class GlancesPassword(object):
     def __init__(self, username='glances'):
         self.username = username
         self.password_dir = user_config_dir()
-        self.password_filename = self.username + '.pwd'
+        self.password_filename = f'{self.username}.pwd'
         self.password_file = os.path.join(self.password_dir, self.password_filename)
 
     def sha256_hash(self, plain_password):
@@ -54,7 +54,7 @@ class GlancesPassword(object):
         """Hash password with a salt based on UUID (universally unique identifier)."""
         salt = uuid.uuid4().hex
         encrypted_password = self.get_hash(salt, plain_password)
-        return salt + '$' + encrypted_password
+        return f'{salt}${encrypted_password}'
 
     def check_password(self, hashed_password, plain_password):
         """Encode the plain_password with the salt of the hashed_password.
@@ -80,7 +80,7 @@ class GlancesPassword(object):
         """
         if os.path.exists(self.password_file) and not clear:
             # If the password file exist then use it
-            logger.info("Read password from file {}".format(self.password_file))
+            logger.info(f"Read password from file {self.password_file}")
             password = self.load_password()
         else:
             # password_sha256 is the plain SHA-256 password
@@ -96,11 +96,7 @@ class GlancesPassword(object):
                     sys.exit(1)
 
             # Return the plain SHA-256 or the salted password
-            if clear:
-                password = password_sha256
-            else:
-                password = password_hashed
-
+            password = password_sha256 if clear else password_hashed
             # Save the hashed password to the password file
             if not clear:
                 save_input = input('Do you want to save the password? [Yes/No]: ')

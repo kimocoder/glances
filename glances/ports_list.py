@@ -57,9 +57,13 @@ class GlancesPortsList(object):
         if config is None:
             logger.debug("No configuration file available. Cannot load ports list.")
         elif not config.has_section(self._section):
-            logger.debug("No [%s] section in the configuration file. Cannot load ports list." % self._section)
+            logger.debug(
+                f"No [{self._section}] section in the configuration file. Cannot load ports list."
+            )
         else:
-            logger.debug("Start reading the [%s] section in the configuration file" % self._section)
+            logger.debug(
+                f"Start reading the [{self._section}] section in the configuration file"
+            )
 
             refresh = int(config.get_value(self._section, 'refresh', default=self._default_refresh))
             timeout = int(config.get_value(self._section, 'timeout', default=self._default_timeout))
@@ -79,29 +83,29 @@ class GlancesPortsList(object):
                 new_port['timeout'] = timeout
                 new_port['status'] = None
                 new_port['rtt_warning'] = None
-                new_port['indice'] = str('port_0')
-                logger.debug("Add default gateway %s to the static list" % (new_port['host']))
+                new_port['indice'] = 'port_0'
+                logger.debug(f"Add default gateway {new_port['host']} to the static list")
                 ports_list.append(new_port)
 
             # Read the scan list
             for i in range(1, 256):
                 new_port = {}
-                postfix = 'port_%s_' % str(i)
+                postfix = f'port_{str(i)}_'
 
                 # Read mandatories configuration key: host
-                new_port['host'] = config.get_value(self._section, '%s%s' % (postfix, 'host'))
+                new_port['host'] = config.get_value(self._section, f'{postfix}host')
 
                 if new_port['host'] is None:
                     continue
 
                 # Read optionals configuration keys
                 # Port is set to 0 by default. 0 mean ICMP check instead of TCP check
-                new_port['port'] = config.get_value(self._section,
-                                                    '%s%s' % (postfix, 'port'),
-                                                    0)
-                new_port['description'] = config.get_value(self._section,
-                                                           '%sdescription' % postfix,
-                                                           default="%s:%s" % (new_port['host'], new_port['port']))
+                new_port['port'] = config.get_value(self._section, f'{postfix}port', 0)
+                new_port['description'] = config.get_value(
+                    self._section,
+                    f'{postfix}description',
+                    default=f"{new_port['host']}:{new_port['port']}",
+                )
 
                 # Default status
                 new_port['status'] = None
@@ -110,27 +114,31 @@ class GlancesPortsList(object):
                 new_port['refresh'] = refresh
 
                 # Timeout in second
-                new_port['timeout'] = int(config.get_value(self._section,
-                                                           '%stimeout' % postfix,
-                                                           default=timeout))
+                new_port['timeout'] = int(
+                    config.get_value(
+                        self._section, f'{postfix}timeout', default=timeout
+                    )
+                )
 
                 # RTT warning
-                new_port['rtt_warning'] = config.get_value(self._section,
-                                                           '%srtt_warning' % postfix,
-                                                           default=None)
+                new_port['rtt_warning'] = config.get_value(
+                    self._section, f'{postfix}rtt_warning', default=None
+                )
                 if new_port['rtt_warning'] is not None:
                     # Convert to second
                     new_port['rtt_warning'] = int(new_port['rtt_warning']) / 1000.0
 
                 # Indice
-                new_port['indice'] = 'port_' + str(i)
+                new_port['indice'] = f'port_{str(i)}'
 
                 # Add the server to the list
-                logger.debug("Add port %s:%s to the static list" % (new_port['host'], new_port['port']))
+                logger.debug(
+                    f"Add port {new_port['host']}:{new_port['port']} to the static list"
+                )
                 ports_list.append(new_port)
 
             # Ports list loaded
-            logger.debug("Ports list loaded: %s" % ports_list)
+            logger.debug(f"Ports list loaded: {ports_list}")
 
         return ports_list
 

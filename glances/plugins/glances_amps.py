@@ -57,10 +57,6 @@ class Plugin(GlancesPlugin):
                               'count': v.count(),
                               'countmin': v.count_min(),
                               'countmax': v.count_max()})
-        else:
-            # Not available in SNMP mode
-            pass
-
         # Update the stats
         self.stats = stats
 
@@ -75,15 +71,9 @@ class Plugin(GlancesPlugin):
         if countmax is None:
             countmax = nbprocess
         if nbprocess > 0:
-            if int(countmin) <= int(nbprocess) <= int(countmax):
-                return 'OK'
-            else:
-                return 'WARNING'
+            return 'OK' if int(countmin) <= int(nbprocess) <= int(countmax) else 'WARNING'
         else:
-            if int(countmin) == 0:
-                return 'OK'
-            else:
-                return 'CRITICAL'
+            return 'OK' if int(countmin) == 0 else 'CRITICAL'
 
     def msg_curse(self, args=None, max_width=None):
         """Return the dict to display in the curse interface."""
@@ -100,9 +90,9 @@ class Plugin(GlancesPlugin):
             if m['result'] is None:
                 continue
             # Display AMP
-            first_column = '{}'.format(m['name'])
+            first_column = f"{m['name']}"
             first_column_style = self.get_alert(m['count'], m['countmin'], m['countmax'])
-            second_column = '{}'.format(m['count'])
+            second_column = f"{m['count']}"
             for l in m['result'].split('\n'):
                 # Display first column with the process name...
                 msg = '{:<16} '.format(first_column)
@@ -112,10 +102,7 @@ class Plugin(GlancesPlugin):
                 ret.append(self.curse_add_line(msg))
                 # ... only on the first line
                 first_column = second_column = ''
-                # Display AMP result in the third column
-                ret.append(self.curse_add_line(l, splittable=True))
-                ret.append(self.curse_new_line())
-
+                ret.extend((self.curse_add_line(l, splittable=True), self.curse_new_line()))
         # Delete the last empty line
         try:
             ret.pop()

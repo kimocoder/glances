@@ -63,7 +63,7 @@ class GlancesStdout(object):
         for plugin, attribute in self.plugins_list:
             # Check if the plugin exist and is enable
             if plugin in stats.getPluginsList() and \
-               stats.get_plugin(plugin).is_enable():
+                   stats.get_plugin(plugin).is_enable():
                 stat = stats.get_plugin(plugin).get_export()
             else:
                 continue
@@ -71,13 +71,12 @@ class GlancesStdout(object):
             if attribute is not None:
                 # With attribute
                 try:
-                    printandflush("{}.{}: {}".format(plugin, attribute,
-                                                     stat[attribute]))
+                    printandflush(f"{plugin}.{attribute}: {stat[attribute]}")
                 except KeyError as err:
-                    logger.error("Can not display stat {}.{} ({})".format(plugin, attribute, err))
+                    logger.error(f"Can not display stat {plugin}.{attribute} ({err})")
             else:
                 # Without attribute
-                printandflush("{}: {}".format(plugin, stat))
+                printandflush(f"{plugin}: {stat}")
 
         # Wait until next refresh
         if duration > 0:

@@ -67,8 +67,7 @@ class Export(GlancesExport):
         if not self.export_enable:
             return None
         try:
-            client = paho.Client(client_id='glances_' + self.hostname,
-                                 clean_session=False)
+            client = paho.Client(client_id=f'glances_{self.hostname}', clean_session=False)
             client.username_pw_set(username=self.user,
                                    password=self.password)
             if self.tls:
@@ -78,13 +77,13 @@ class Export(GlancesExport):
             client.loop_start()
             return client
         except Exception as e:
-            logger.critical("Connection to MQTT server failed : %s " % e)
+            logger.critical(f"Connection to MQTT server failed : {e} ")
             return None
 
     def export(self, name, columns, points):
         """Write the points in MQTT."""
 
-        WHITELIST = '_-' + string.ascii_letters + string.digits
+        WHITELIST = f'_-{string.ascii_letters}{string.digits}'
         SUBSTITUTE = '_'
 
         def whitelisted(s,
@@ -101,4 +100,4 @@ class Export(GlancesExport):
 
                 self.client.publish(topic, value)
             except Exception as e:
-                logger.error("Can not export stats to MQTT server (%s)" % e)
+                logger.error(f"Can not export stats to MQTT server ({e})")

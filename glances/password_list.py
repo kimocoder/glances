@@ -43,15 +43,21 @@ class GlancesPasswordList(GlancesPassword):
         if config is None:
             logger.warning("No configuration file available. Cannot load password list.")
         elif not config.has_section(self._section):
-            logger.warning("No [%s] section in the configuration file. Cannot load password list." % self._section)
+            logger.warning(
+                f"No [{self._section}] section in the configuration file. Cannot load password list."
+            )
         else:
-            logger.info("Start reading the [%s] section in the configuration file" % self._section)
+            logger.info(
+                f"Start reading the [{self._section}] section in the configuration file"
+            )
 
             password_dict = dict(config.items(self._section))
 
             # Password list loaded
-            logger.info("%s password(s) loaded from the configuration file" % len(password_dict))
-            logger.debug("Password dictionary: %s" % password_dict)
+            logger.info(
+                f"{len(password_dict)} password(s) loaded from the configuration file"
+            )
+            logger.debug(f"Password dictionary: {password_dict}")
 
         return password_dict
 
@@ -62,14 +68,13 @@ class GlancesPasswordList(GlancesPassword):
         """
         if host is None:
             return self._password_dict
-        else:
+        try:
+            return self._password_dict[host]
+        except (KeyError, TypeError):
             try:
-                return self._password_dict[host]
+                return self._password_dict['default']
             except (KeyError, TypeError):
-                try:
-                    return self._password_dict['default']
-                except (KeyError, TypeError):
-                    return None
+                return None
 
     def set_password(self, host, password):
         """Set a password for a specific host."""

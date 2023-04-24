@@ -62,11 +62,6 @@ class Plugin(GlancesPlugin):
             except NameError:
                 self.reset()
 
-        elif self.input_method == 'snmp':
-            # Update stats using SNMP
-            # http://stackoverflow.com/questions/5662467/how-to-find-out-the-number-of-cpus-using-snmp
-            pass
-
         # Update the stats
         self.stats = stats
 

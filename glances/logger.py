@@ -19,6 +19,7 @@
 
 """Custom logger class."""
 
+
 import os
 import json
 import getpass
@@ -27,8 +28,9 @@ import tempfile
 import logging
 import logging.config
 
-LOG_FILENAME = os.path.join(tempfile.gettempdir(),
-                            'glances-{}.log'.format(getpass.getuser()))
+LOG_FILENAME = os.path.join(
+    tempfile.gettempdir(), f'glances-{getpass.getuser()}.log'
+)
 
 # Define the logging configuration
 LOGGING_CFG = {

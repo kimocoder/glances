@@ -32,10 +32,7 @@ def getTimeSinceLastUpdate(IOType):
     # assert(IOType in ['net', 'disk', 'process_disk'])
     current_time = time()
     last_time = last_update_times.get(IOType)
-    if not last_time:
-        time_since_update = 1
-    else:
-        time_since_update = current_time - last_time
+    time_since_update = current_time - last_time if last_time else 1
     last_update_times[IOType] = current_time
     return time_since_update
 

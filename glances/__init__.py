@@ -20,6 +20,7 @@
 
 """Init the Glances software."""
 
+
 # Import system libs
 import locale
 import platform
@@ -57,7 +58,7 @@ if sys.version_info < (2, 7) or (3, 0) <= sys.version_info < (3, 4):
 
 # Check psutil version
 psutil_min_version = (5, 3, 0)
-psutil_version_info = tuple([int(num) for num in psutil_version.split('.')])
+psutil_version_info = tuple(int(num) for num in psutil_version.split('.'))
 if psutil_version_info < psutil_min_version:
     print('psutil 5.3.0 or higher is needed. Glances cannot start.')
     sys.exit(1)
@@ -102,7 +103,7 @@ def start(config, args):
         from glances.webserver import GlancesWebServer as GlancesMode
 
     # Init the mode
-    logger.info("Start {} mode".format(GlancesMode.__name__))
+    logger.info(f"Start {GlancesMode.__name__} mode")
     mode = GlancesMode(config=config, args=args)
 
     # Start the main loop
@@ -122,11 +123,10 @@ def main():
     signal.signal(signal.SIGINT, __signal_handler)
 
     # Log Glances and psutil version
-    logger.info('Start Glances {}'.format(__version__))
-    logger.info('{} {} and psutil {} detected'.format(
-        platform.python_implementation(),
-        platform.python_version(),
-        psutil_version))
+    logger.info(f'Start Glances {__version__}')
+    logger.info(
+        f'{platform.python_implementation()} {platform.python_version()} and psutil {psutil_version} detected'
+    )
 
     # Share global var
     global core

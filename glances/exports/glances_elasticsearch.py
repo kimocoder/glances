@@ -57,7 +57,7 @@ class Export(GlancesExport):
         if not self.export_enable:
             return None
 
-        self.index='{}-{}'.format(self.index, datetime.utcnow().strftime("%Y.%m.%d"))
+        self.index = f'{self.index}-{datetime.utcnow().strftime("%Y.%m.%d")}'
         template_body =  {
           "mappings": {
             "glances": {
@@ -90,12 +90,14 @@ class Export(GlancesExport):
         }
 
         try:
-            es = Elasticsearch(hosts=['{}:{}'.format(self.host, self.port)])
+            es = Elasticsearch(hosts=[f'{self.host}:{self.port}'])
         except Exception as e:
-            logger.critical("Cannot connect to ElasticSearch server %s:%s (%s)" % (self.host, self.port, e))
+            logger.critical(
+                f"Cannot connect to ElasticSearch server {self.host}:{self.port} ({e})"
+            )
             sys.exit(2)
         else:
-            logger.info("Connected to the ElasticSearch server %s:%s" % (self.host, self.port))
+            logger.info(f"Connected to the ElasticSearch server {self.host}:{self.port}")
 
         try:
             index_count = es.count(index=self.index)['count']
@@ -104,13 +106,13 @@ class Export(GlancesExport):
             # Create it...
             es.indices.create(index=self.index,body=template_body)
         else:
-            logger.info("The index %s exists and holds %s entries." % (self.index, index_count))
+            logger.info(f"The index {self.index} exists and holds {index_count} entries.")
 
         return es
 
     def export(self, name, columns, points):
         """Write the points to the ES server."""
-        logger.debug("Export {} stats to ElasticSearch".format(name))
+        logger.debug(f"Export {name} stats to ElasticSearch")
 
         # Create DB input
         # https://elasticsearch-py.readthedocs.io/en/master/helpers.html
@@ -119,20 +121,20 @@ class Export(GlancesExport):
             dtnow = datetime.utcnow()
             action = {
                 "_index": self.index,
-                "_id": '{}.{}'.format(name,c),
+                "_id": f'{name}.{c}',
                 "_type": "glances",
                 "_source": {
                     "plugin": name,
                     "metric": c,
                     "value": str(p),
-                    "timestamp": dtnow.isoformat('T')
-                }
+                    "timestamp": dtnow.isoformat('T'),
+                },
             }
-            logger.debug("Exporting the following object to elasticsearch: {}".format(action))
+            logger.debug(f"Exporting the following object to elasticsearch: {action}")
             actions.append(action)
 
         # Write input to the ES index
         try:
             helpers.bulk(self.client, actions)
         except Exception as e:
-            logger.error("Cannot export {} stats to ElasticSearch ({})".format(name, e))
+            logger.error(f"Cannot export {name} stats to ElasticSearch ({e})")

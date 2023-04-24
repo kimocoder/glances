@@ -19,6 +19,7 @@
 
 """Quicklook plugin."""
 
+
 from glances.cpu_percent import cpu_percent
 from glances.logger import logger
 from glances.outputs.glances_bars import Bar
@@ -32,7 +33,9 @@ try:
     from cpuinfo import cpuinfo
 except ImportError as e:
     cpuinfo_tag = False
-    logger.warning("Missing Python Lib ({}), Quicklook plugin will not display CPU info".format(e))
+    logger.warning(
+        f"Missing Python Lib ({e}), Quicklook plugin will not display CPU info"
+    )
 else:
     cpuinfo_tag = True
 
@@ -81,10 +84,6 @@ class Plugin(GlancesPlugin):
             # Use the psutil lib for the memory (virtual and swap)
             stats['mem'] = psutil.virtual_memory().percent
             stats['swap'] = psutil.swap_memory().percent
-        elif self.input_method == 'snmp':
-            # Not available
-            pass
-
         # Optionnaly, get the CPU name/frequency
         # thanks to the cpuinfo lib: https://github.com/workhorsy/py-cpuinfo
         if cpuinfo_tag:
@@ -133,13 +132,12 @@ class Plugin(GlancesPlugin):
 
         # Build the string message
         if 'cpu_name' in self.stats and 'cpu_hz_current' in self.stats and 'cpu_hz' in self.stats:
-            msg_name = '{} - '.format(self.stats['cpu_name'])
+            msg_name = f"{self.stats['cpu_name']} - "
             msg_freq = '{:.2f}/{:.2f}GHz'.format(self._hz_to_ghz(self.stats['cpu_hz_current']),
                                                  self._hz_to_ghz(self.stats['cpu_hz']))
             if len(msg_name + msg_freq) - 6 <= max_width:
                 ret.append(self.curse_add_line(msg_name))
-            ret.append(self.curse_add_line(msg_freq))
-            ret.append(self.curse_new_line())
+            ret.extend((self.curse_add_line(msg_freq), self.curse_new_line()))
         for key in ['cpu', 'mem', 'swap']:
             if key == 'cpu' and args.percpu:
                 if sparkline_tag:
@@ -180,9 +178,8 @@ class Plugin(GlancesPlugin):
 
     def _msg_create_line(self, msg, data, key):
         """Create a new line to the Quickview."""
-        ret = []
+        ret = [self.curse_add_line(msg)]
 
-        ret.append(self.curse_add_line(msg))
         ret.append(self.curse_add_line(data.pre_char, decoration='BOLD'))
         ret.append(self.curse_add_line(data.get(), self.get_views(key=key, option='decoration')))
         ret.append(self.curse_add_line(data.post_char, decoration='BOLD'))

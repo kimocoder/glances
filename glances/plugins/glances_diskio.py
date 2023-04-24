@@ -127,11 +127,6 @@ class Plugin(GlancesPlugin):
 
                 # Save stats to compute next bitrate
                 self.diskio_old = diskio_new
-        elif self.input_method == 'snmp':
-            # Update stats using SNMP
-            # No standard way for the moment...
-            pass
-
         # Update the stats
         self.stats = stats
 
@@ -146,10 +141,18 @@ class Plugin(GlancesPlugin):
         # Alert
         for i in self.stats:
             disk_real_name = i['disk_name']
-            self.views[i[self.get_key()]]['read_bytes']['decoration'] = self.get_alert(int(i['read_bytes'] // i['time_since_update']),
-                                                                                       header=disk_real_name + '_rx')
-            self.views[i[self.get_key()]]['write_bytes']['decoration'] = self.get_alert(int(i['write_bytes'] // i['time_since_update']),
-                                                                                        header=disk_real_name + '_tx')
+            self.views[i[self.get_key()]]['read_bytes'][
+                'decoration'
+            ] = self.get_alert(
+                int(i['read_bytes'] // i['time_since_update']),
+                header=f'{disk_real_name}_rx',
+            )
+            self.views[i[self.get_key()]]['write_bytes'][
+                'decoration'
+            ] = self.get_alert(
+                int(i['write_bytes'] // i['time_since_update']),
+                header=f'{disk_real_name}_tx',
+            )
 
     def msg_curse(self, args=None, max_width=None):
         """Return the dict to display in the curse interface."""
@@ -170,12 +173,11 @@ class Plugin(GlancesPlugin):
             msg = '{:>7}'.format('IOR/s')
             ret.append(self.curse_add_line(msg))
             msg = '{:>7}'.format('IOW/s')
-            ret.append(self.curse_add_line(msg))
         else:
             msg = '{:>7}'.format('R/s')
             ret.append(self.curse_add_line(msg))
             msg = '{:>7}'.format('W/s')
-            ret.append(self.curse_add_line(msg))
+        ret.append(self.curse_add_line(msg))
         # Disk list (sorted by name)
         for i in self.sorted_stats():
             # Is there an alias for the disk name ?
@@ -187,7 +189,7 @@ class Plugin(GlancesPlugin):
             ret.append(self.curse_new_line())
             if len(disk_name) > name_max_width:
                 # Cut disk name if it is too long
-                disk_name = '_' + disk_name[-name_max_width:]
+                disk_name = f'_{disk_name[-name_max_width:]}'
             msg = '{:{width}}'.format(nativestr(disk_name),
                                       width=name_max_width)
             ret.append(self.curse_add_line(msg))

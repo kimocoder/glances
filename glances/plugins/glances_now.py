@@ -51,20 +51,15 @@ class Plugin(GlancesPlugin):
         self.stats = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # Add the time zone (issue #1249 and issue #1337)
         if 'tmzone' in localtime():
-            self.stats += ' {}'.format(localtime().tm_zone)
+            self.stats += f' {localtime().tm_zone}'
         elif len(tzname) > 0:
-            self.stats += ' {}'.format(tzname[1])
+            self.stats += f' {tzname[1]}'
 
         return self.stats
 
     def msg_curse(self, args=None, max_width=None):
         """Return the string to display in the curse interface."""
-        # Init the return message
-        ret = []
-
         # Build the string message
         # 23 is the padding for the process list
         msg = '{:23}'.format(self.stats)
-        ret.append(self.curse_add_line(msg))
-
-        return ret
+        return [self.curse_add_line(msg)]
